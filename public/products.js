@@ -31,3 +31,12 @@ window.PRODUCTS = [
 
   { id: "p16", name: "Baby Feeding Set", category: "Baby & Kids", price: 1100, originalPrice: 1500, hot: false, inStock: true, dateAdded: "2026-08-04", image: "babyset.jpg" }
 ];
+
+// Deal of the Day rotation — references product IDs above.
+// today = today's featured deal. previous = last 2 days, most recent first.
+// next = tomorrow's teaser (shown blurred/locked on the site, not purchasable yet).
+window.DAILY_DEALS = {
+  today: "p1",
+  previous: ["p5", "p12"],
+  next: "p2"
+};

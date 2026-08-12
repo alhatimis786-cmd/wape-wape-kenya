@@ -31,12 +31,60 @@ function imgSrc(product) {
 
 function placeholderFor(product) {
   const label = encodeURIComponent(product.name);
-  return `https://placehold.co/400x400/1E2025/FF5A1F?text=${label}`;
+  return `https://placehold.co/400x400/ECECF0/FF5A1F?text=${label}`;
 }
 
 function discountPct(p) {
   if (!p.originalPrice || p.originalPrice <= p.price) return 0;
   return Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100);
+}
+
+// ---------- Likes (personal, saved locally) & Ask-about (opens WhatsApp) ----------
+
+function isLiked(id) {
+  const liked = JSON.parse(localStorage.getItem("wwk_liked") || "{}");
+  return !!liked[id];
+}
+
+function toggleLike(id, btn) {
+  const liked = JSON.parse(localStorage.getItem("wwk_liked") || "{}");
+  liked[id] = !liked[id];
+  localStorage.setItem("wwk_liked", JSON.stringify(liked));
+  btn.classList.toggle("liked", !!liked[id]);
+  btn.setAttribute("aria-pressed", String(!!liked[id]));
+}
+
+function askAboutProduct(id) {
+  const p = window.PRODUCTS.find((p) => p.id === id);
+  if (!p) return;
+  const msg = encodeURIComponent(`Hi, I have a question about ${p.name} (${money(p.price)}).`);
+  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, "_blank");
+}
+
+const HEART_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-6.7-4.35-9.33-8.2C1.02 10.28 1.6 6.9 4.36 5.3c2.3-1.33 5.02-.62 6.64 1.44C12.62 4.68 15.34 3.97 17.64 5.3c2.76 1.6 3.34 4.98 1.69 7.5C18.7 16.65 12 21 12 21z"/></svg>`;
+const CHAT_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`;
+
+function cardActionsHTML(p) {
+  const liked = isLiked(p.id);
+  const outOfStock = p.inStock === false;
+  return `
+    <div class="card-actions">
+      <button class="icon-btn like-btn${liked ? " liked" : ""}" data-id="${p.id}" aria-label="Save ${p.name}" aria-pressed="${liked}">${HEART_ICON}</button>
+      <button class="icon-btn ask-btn" data-id="${p.id}" aria-label="Ask about ${p.name}">${CHAT_ICON}</button>
+      <button class="add-btn" data-id="${p.id}" aria-label="Add ${p.name} to cart"${outOfStock ? " disabled" : ""}>+</button>
+    </div>`;
+}
+
+function wireProductButtons(container) {
+  container.querySelectorAll(".add-btn:not(:disabled)").forEach((btn) => {
+    btn.addEventListener("click", () => addToCart(btn.dataset.id));
+  });
+  container.querySelectorAll(".like-btn").forEach((btn) => {
+    btn.addEventListener("click", () => toggleLike(btn.dataset.id, btn));
+  });
+  container.querySelectorAll(".ask-btn").forEach((btn) => {
+    btn.addEventListener("click", () => askAboutProduct(btn.dataset.id));
+  });
 }
 
 // ---------- Filtering / sorting ----------
@@ -148,20 +196,71 @@ function renderGrid() {
             ${p.originalPrice ? `<span class="price-was">${money(p.originalPrice)}</span>` : ""}
             <span class="card-price">${money(p.price)}</span>
           </div>
-          <div class="card-foot">
-            <span class="stock-note">${outOfStock ? "Restocking soon" : "In stock"}</span>
-            <button class="add-btn" data-id="${p.id}" aria-label="Add ${p.name} to cart" ${outOfStock ? "disabled" : ""}>+</button>
-          </div>
+          <span class="stock-note">${outOfStock ? "Restocking soon" : "In stock"}</span>
+          ${cardActionsHTML(p)}
         </div>
       </div>`;
     }).join("");
 
-    grid.querySelectorAll(".add-btn:not(:disabled)").forEach((btn) => {
-      btn.addEventListener("click", () => addToCart(btn.dataset.id));
-    });
+    wireProductButtons(grid);
   }
 
   document.getElementById("statCount").textContent = window.PRODUCTS.length + "+";
+}
+
+function renderDealOfDay() {
+  const deals = window.DAILY_DEALS;
+  const row = document.getElementById("dotdRow");
+  if (!row || !deals || !deals.today) return;
+
+  const find = (id) => window.PRODUCTS.find((p) => p.id === id);
+  const todayP = find(deals.today);
+  const prevPs = (deals.previous || []).map(find).filter(Boolean);
+  const nextP = find(deals.next);
+
+  const cards = [];
+  if (todayP) cards.push(dotdCardHTML(todayP, "Today", true));
+  prevPs.forEach((p, i) => {
+    cards.push(dotdCardHTML(p, i === 0 ? "Yesterday" : `${i + 1} days ago`, false));
+  });
+  if (nextP) cards.push(dotdLockedCardHTML(nextP));
+
+  row.innerHTML = cards.join("");
+  wireProductButtons(row);
+}
+
+function dotdCardHTML(p, tag, featured) {
+  return `
+    <article class="dotd-card${featured ? " dotd-featured" : ""}">
+      <span class="dotd-tag">${tag}</span>
+      <div class="dotd-img">
+        <img src="${imgSrc(p)}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
+      </div>
+      <div class="dotd-body">
+        <span class="card-cat">${p.category}</span>
+        <span class="dotd-name">${p.name}</span>
+        <div class="price-row">
+          ${p.originalPrice ? `<span class="price-was">${money(p.originalPrice)}</span>` : ""}
+          <span class="card-price">${money(p.price)}</span>
+        </div>
+        ${cardActionsHTML(p)}
+      </div>
+    </article>`;
+}
+
+function dotdLockedCardHTML(p) {
+  return `
+    <article class="dotd-card dotd-locked">
+      <span class="dotd-tag">Tomorrow</span>
+      <div class="dotd-img">
+        <img src="${imgSrc(p)}" alt="Mystery deal" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
+        <div class="dotd-lock-overlay"><span class="lock-q">?</span></div>
+      </div>
+      <div class="dotd-body">
+        <span class="dotd-name">Tomorrow's deal</span>
+        <span class="stock-note">Revealed at midnight</span>
+      </div>
+    </article>`;
 }
 
 function renderTrending() {
@@ -304,6 +403,7 @@ function sendOrderToWhatsApp(e) {
 let searchDebounce;
 
 document.addEventListener("DOMContentLoaded", () => {
+  renderDealOfDay();
   renderTrending();
   renderNavCategories();
   renderTabs();
