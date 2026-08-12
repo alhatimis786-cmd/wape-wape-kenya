@@ -3,6 +3,8 @@ const WHATSAPP_NUMBER = "254700000000";
 
 const state = {
   category: "All",
+  search: "",
+  sort: "featured",
   cart: JSON.parse(localStorage.getItem("wwk_cart") || "{}") // { productId: qty }
 };
 
@@ -32,6 +34,34 @@ function placeholderFor(product) {
   return `https://placehold.co/400x400/1E2025/FF5A1F?text=${label}`;
 }
 
+function discountPct(p) {
+  if (!p.originalPrice || p.originalPrice <= p.price) return 0;
+  return Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100);
+}
+
+// ---------- Filtering / sorting ----------
+
+function getVisibleProducts() {
+  let items = state.category === "All"
+    ? window.PRODUCTS
+    : window.PRODUCTS.filter((p) => p.category === state.category);
+
+  if (state.search.trim()) {
+    const q = state.search.trim().toLowerCase();
+    items = items.filter((p) => p.name.toLowerCase().includes(q));
+  }
+
+  items = [...items];
+  switch (state.sort) {
+    case "price-asc": items.sort((a, b) => a.price - b.price); break;
+    case "price-desc": items.sort((a, b) => b.price - a.price); break;
+    case "discount": items.sort((a, b) => discountPct(b) - discountPct(a)); break;
+    case "newest": items.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded)); break;
+    default: break; // featured = catalog order
+  }
+  return items;
+}
+
 // ---------- Rendering ----------
 
 function renderTabs() {
@@ -41,42 +71,103 @@ function renderTabs() {
     .map((c) => `<button class="tab${c === state.category ? " active" : ""}" data-cat="${c}">${c}</button>`)
     .join("");
   el.querySelectorAll(".tab").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      state.category = btn.dataset.cat;
-      renderTabs();
-      renderGrid();
-    });
+    btn.addEventListener("click", () => setCategory(btn.dataset.cat));
   });
 }
 
-function renderGrid() {
-  const grid = document.getElementById("productGrid");
-  const items = state.category === "All"
-    ? window.PRODUCTS
-    : window.PRODUCTS.filter((p) => p.category === state.category);
-
-  grid.innerHTML = items.map((p) => `
-    <div class="card">
-      <div class="card-img">
-        <img src="${imgSrc(p)}" alt="${p.name}" loading="lazy"
-             onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
-      </div>
-      <div class="card-body">
-        <span class="card-cat">${p.category}</span>
-        <span class="card-name">${p.name}</span>
-        <div class="card-foot">
-          <span class="card-price">${money(p.price)}</span>
-          <button class="add-btn" data-id="${p.id}" aria-label="Add ${p.name} to cart">+</button>
-        </div>
-      </div>
-    </div>
-  `).join("");
-
-  grid.querySelectorAll(".add-btn").forEach((btn) => {
-    btn.addEventListener("click", () => addToCart(btn.dataset.id));
+function renderSidebar() {
+  const cats = ["All", ...new Set(window.PRODUCTS.map((p) => p.category))];
+  const el = document.getElementById("sidebarList");
+  el.innerHTML = cats.map((c) => {
+    const count = c === "All" ? window.PRODUCTS.length : window.PRODUCTS.filter((p) => p.category === c).length;
+    return `<button class="sidebar-item${c === state.category ? " active" : ""}" data-cat="${c}"><span>${c}</span><span class="count">${count}</span></button>`;
+  }).join("");
+  el.querySelectorAll(".sidebar-item").forEach((btn) => {
+    btn.addEventListener("click", () => setCategory(btn.dataset.cat));
   });
+}
+
+function setCategory(cat) {
+  state.category = cat;
+  renderTabs();
+  renderSidebar();
+  renderGrid();
+}
+
+function cardBadges(p) {
+  const pct = discountPct(p);
+  let html = "";
+  if (pct > 0) html += `<span class="badge badge-discount">-${pct}%</span>`;
+  if (p.hot) html += `<span class="badge badge-hot">🔥 Hot</span>`;
+  if (p.inStock === false) html += `<span class="badge badge-out">Out of stock</span>`;
+  return html ? `<div class="card-badges">${html}</div>` : "";
+}
+
+function renderGrid() {
+  const items = getVisibleProducts();
+  const grid = document.getElementById("productGrid");
+  const noResults = document.getElementById("noResults");
+  const resultCount = document.getElementById("resultCount");
+
+  resultCount.textContent = `${items.length} deal${items.length === 1 ? "" : "s"}${state.category !== "All" ? " in " + state.category : ""}${state.search ? ` matching "${state.search}"` : ""}`;
+
+  if (items.length === 0) {
+    grid.innerHTML = "";
+    noResults.hidden = false;
+  } else {
+    noResults.hidden = true;
+    grid.innerHTML = items.map((p) => {
+      const outOfStock = p.inStock === false;
+      return `
+      <div class="card${outOfStock ? " out-of-stock" : ""}">
+        <div class="card-img">
+          ${cardBadges(p)}
+          <img src="${imgSrc(p)}" alt="${p.name}" loading="lazy"
+               onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
+        </div>
+        <div class="card-body">
+          <span class="card-cat">${p.category}</span>
+          <span class="card-name">${p.name}</span>
+          <div class="price-row">
+            ${p.originalPrice ? `<span class="price-was">${money(p.originalPrice)}</span>` : ""}
+            <span class="card-price">${money(p.price)}</span>
+          </div>
+          <div class="card-foot">
+            <span class="stock-note">${outOfStock ? "Restocking soon" : "In stock"}</span>
+            <button class="add-btn" data-id="${p.id}" aria-label="Add ${p.name} to cart" ${outOfStock ? "disabled" : ""}>+</button>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+
+    grid.querySelectorAll(".add-btn:not(:disabled)").forEach((btn) => {
+      btn.addEventListener("click", () => addToCart(btn.dataset.id));
+    });
+  }
 
   document.getElementById("statCount").textContent = window.PRODUCTS.length + "+";
+}
+
+function renderTrending() {
+  const hot = window.PRODUCTS.filter((p) => p.hot);
+  const section = document.getElementById("trendingSection");
+  const row = document.getElementById("trendingRow");
+  if (hot.length === 0) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+  row.innerHTML = hot.map((p) => `
+    <a class="trending-card" href="#shop" data-id="${p.id}">
+      <div class="t-img">
+        <img src="${imgSrc(p)}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
+      </div>
+      <div class="t-body">
+        <span class="t-name">${p.name}</span>
+        <span class="t-price">${money(p.price)}</span>
+      </div>
+    </a>
+  `).join("");
 }
 
 function renderCart() {
@@ -128,6 +219,8 @@ function updateBadges() {
 // ---------- Cart actions ----------
 
 function addToCart(id) {
+  const p = window.PRODUCTS.find((p) => p.id === id);
+  if (!p || p.inStock === false) return;
   state.cart[id] = (state.cart[id] || 0) + 1;
   saveCart();
   renderCart();
@@ -192,8 +285,12 @@ function sendOrderToWhatsApp(e) {
 
 // ---------- Init ----------
 
+let searchDebounce;
+
 document.addEventListener("DOMContentLoaded", () => {
+  renderTrending();
   renderTabs();
+  renderSidebar();
   renderGrid();
   renderCart();
 
@@ -205,6 +302,20 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("closeCheckout").addEventListener("click", closeCheckout);
   document.getElementById("checkoutOverlay").addEventListener("click", closeCheckout);
   document.getElementById("checkoutForm").addEventListener("submit", sendOrderToWhatsApp);
+
+  document.getElementById("searchInput").addEventListener("input", (e) => {
+    clearTimeout(searchDebounce);
+    const value = e.target.value;
+    searchDebounce = setTimeout(() => {
+      state.search = value;
+      renderGrid();
+    }, 150);
+  });
+
+  document.getElementById("sortSelect").addEventListener("change", (e) => {
+    state.sort = e.target.value;
+    renderGrid();
+  });
 
   const waLink = `https://wa.me/${WHATSAPP_NUMBER}`;
   document.getElementById("footerWhatsApp").href = waLink;

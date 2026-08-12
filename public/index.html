@@ -53,12 +53,45 @@
     </div>
   </section>
 
+  <section class="trending" id="trendingSection" hidden>
+    <div class="trending-head">
+      <span class="fire">🔥</span>
+      <h2>Trending now</h2>
+    </div>
+    <div class="trending-row" id="trendingRow"></div>
+  </section>
+
   <section class="shop" id="shop">
     <div class="shop-head">
       <h2>Shop the deals</h2>
-      <div class="tabs" id="categoryTabs"></div>
+      <div class="shop-controls">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" id="searchInput" placeholder="Search deals…" aria-label="Search products">
+        </div>
+        <select id="sortSelect" aria-label="Sort products">
+          <option value="featured">Featured</option>
+          <option value="discount">Biggest discount</option>
+          <option value="newest">Newest</option>
+          <option value="price-asc">Price: low to high</option>
+          <option value="price-desc">Price: high to low</option>
+        </select>
+      </div>
     </div>
-    <div class="grid" id="productGrid"></div>
+
+    <div class="tabs" id="categoryTabs"></div>
+
+    <div class="shop-layout">
+      <aside class="sidebar" id="categorySidebar">
+        <span class="sidebar-title">Categories</span>
+        <div id="sidebarList"></div>
+      </aside>
+      <div class="shop-main">
+        <p class="result-count" id="resultCount"></p>
+        <div class="grid" id="productGrid"></div>
+        <p class="no-results" id="noResults" hidden>No deals match that search — try a different term or category.</p>
+      </div>
+    </div>
   </section>
 
   <section class="how" id="how">
