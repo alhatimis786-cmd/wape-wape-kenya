@@ -64,6 +64,21 @@ function getVisibleProducts() {
 
 // ---------- Rendering ----------
 
+function renderNavCategories() {
+  const cats = ["All", ...new Set(window.PRODUCTS.map((p) => p.category))];
+  const el = document.getElementById("navCategories");
+  el.innerHTML = cats
+    .map((c) => `<a href="#shop" class="nav-cat-link${c === state.category ? " active" : ""}" data-cat="${c}">${c}</a>`)
+    .join("");
+  el.querySelectorAll(".nav-cat-link").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      setCategory(link.dataset.cat);
+      document.getElementById("shop").scrollIntoView({ behavior: "smooth" });
+    });
+  });
+}
+
 function renderTabs() {
   const cats = ["All", ...new Set(window.PRODUCTS.map((p) => p.category))];
   const el = document.getElementById("categoryTabs");
@@ -89,6 +104,7 @@ function renderSidebar() {
 
 function setCategory(cat) {
   state.category = cat;
+  renderNavCategories();
   renderTabs();
   renderSidebar();
   renderGrid();
@@ -289,6 +305,7 @@ let searchDebounce;
 
 document.addEventListener("DOMContentLoaded", () => {
   renderTrending();
+  renderNavCategories();
   renderTabs();
   renderSidebar();
   renderGrid();
@@ -303,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("checkoutOverlay").addEventListener("click", closeCheckout);
   document.getElementById("checkoutForm").addEventListener("submit", sendOrderToWhatsApp);
 
-  document.getElementById("searchInput").addEventListener("input", (e) => {
+  document.getElementById("navSearchInput").addEventListener("input", (e) => {
     clearTimeout(searchDebounce);
     const value = e.target.value;
     searchDebounce = setTimeout(() => {
@@ -319,6 +336,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const waLink = `https://wa.me/${WHATSAPP_NUMBER}`;
   document.getElementById("footerWhatsApp").href = waLink;
+  document.getElementById("navWhatsApp").href = waLink;
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});

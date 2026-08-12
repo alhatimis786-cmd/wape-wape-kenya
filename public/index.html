@@ -30,11 +30,24 @@
 </div>
 
 <header class="nav">
-  <a href="#" class="brand">Wape<span>Wape</span>Kenya</a>
-  <button class="cart-btn" id="navCartBtn" aria-label="Open cart">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></svg>
-    <span id="navCartCount">0</span>
-  </button>
+  <div class="nav-row">
+    <a href="#" class="brand">Wape<span>Wape</span>Kenya</a>
+    <div class="nav-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" id="navSearchInput" placeholder="Search deals…" aria-label="Search products">
+    </div>
+    <div class="nav-actions">
+      <a href="#" id="navWhatsApp" class="nav-whatsapp" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.35 5.08L2 22l5.08-1.35A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.6 0-3.09-.44-4.36-1.22l-.31-.19-3.12.82.83-3.04-.2-.32A7.94 7.94 0 0 1 4 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8z"/></svg>
+        <span>WhatsApp</span>
+      </a>
+      <button class="cart-btn" id="navCartBtn" aria-label="Open cart">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></svg>
+        <span id="navCartCount">0</span>
+      </button>
+    </div>
+  </div>
+  <nav class="nav-categories" id="navCategories" aria-label="Product categories"></nav>
 </header>
 
 <main>
@@ -64,19 +77,13 @@
   <section class="shop" id="shop">
     <div class="shop-head">
       <h2>Shop the deals</h2>
-      <div class="shop-controls">
-        <div class="search-box">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="search" id="searchInput" placeholder="Search deals…" aria-label="Search products">
-        </div>
-        <select id="sortSelect" aria-label="Sort products">
-          <option value="featured">Featured</option>
-          <option value="discount">Biggest discount</option>
-          <option value="newest">Newest</option>
-          <option value="price-asc">Price: low to high</option>
-          <option value="price-desc">Price: high to low</option>
-        </select>
-      </div>
+      <select id="sortSelect" aria-label="Sort products">
+        <option value="featured">Featured</option>
+        <option value="discount">Biggest discount</option>
+        <option value="newest">Newest</option>
+        <option value="price-asc">Price: low to high</option>
+        <option value="price-desc">Price: high to low</option>
+      </select>
     </div>
 
     <div class="tabs" id="categoryTabs"></div>
