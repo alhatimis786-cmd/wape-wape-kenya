@@ -14,3 +14,5 @@ Storefront for wapewape.co.ke — static HTML/CSS/JS, no build step.
 - Replace `WHATSAPP_NUMBER` placeholder in `public/app.js` with the real business number
 - Replace placeholder products in `public/products.js` with real stock (or wire to a live data source)
 - Add real product photos to `public/images/`
+
+_Last synced: 2026-08-12 09:31 UTC_
