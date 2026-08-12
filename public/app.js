@@ -103,7 +103,6 @@ function getVisibleProducts() {
   switch (state.sort) {
     case "price-asc": items.sort((a, b) => a.price - b.price); break;
     case "price-desc": items.sort((a, b) => b.price - a.price); break;
-    case "discount": items.sort((a, b) => discountPct(b) - discountPct(a)); break;
     case "newest": items.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded)); break;
     default: break; // featured = catalog order
   }
@@ -215,23 +214,21 @@ function renderDealOfDay() {
 
   const find = (id) => window.PRODUCTS.find((p) => p.id === id);
   const todayP = find(deals.today);
-  const prevPs = (deals.previous || []).map(find).filter(Boolean);
-  const nextP = find(deals.next);
+  const yesterdayP = find(deals.yesterday);
+  const tomorrowP = find(deals.tomorrow);
 
   const cards = [];
-  if (todayP) cards.push(dotdCardHTML(todayP, "Today", true));
-  prevPs.forEach((p, i) => {
-    cards.push(dotdCardHTML(p, i === 0 ? "Yesterday" : `${i + 1} days ago`, false));
-  });
-  if (nextP) cards.push(dotdLockedCardHTML(nextP));
+  if (yesterdayP) cards.push(dotdCardHTML(yesterdayP, "Yesterday", "dotd-past"));
+  if (todayP) cards.push(dotdCardHTML(todayP, "Today", "dotd-featured"));
+  if (tomorrowP) cards.push(dotdLockedCardHTML(tomorrowP));
 
   row.innerHTML = cards.join("");
   wireProductButtons(row);
 }
 
-function dotdCardHTML(p, tag, featured) {
+function dotdCardHTML(p, tag, modifierClass) {
   return `
-    <article class="dotd-card${featured ? " dotd-featured" : ""}">
+    <article class="dotd-card ${modifierClass}">
       <span class="dotd-tag">${tag}</span>
       <div class="dotd-img">
         <img src="${imgSrc(p)}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">

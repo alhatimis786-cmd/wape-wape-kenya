@@ -1,4 +1,4 @@
-const CACHE = "wwk-v1";
+const CACHE = "wwk-v2";
 const CORE_ASSETS = ["/", "/style.css", "/app.js", "/products.js", "/manifest.json"];
 
 self.addEventListener("install", (e) => {
@@ -15,9 +15,17 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
+// Network-first: always try to fetch fresh content. Only fall back to the
+// cached copy if the network request fails (i.e. the visitor is offline).
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request).catch(() => cached))
+    fetch(e.request)
+      .then((res) => {
+        const resClone = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, resClone));
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
