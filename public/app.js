@@ -31,7 +31,7 @@ function imgSrc(product) {
 
 function placeholderFor(product) {
   const label = encodeURIComponent(product.name);
-  return `https://placehold.co/400x400/ECECF0/FF5A1F?text=${label}`;
+  return `https://placehold.co/400x400/ECECF0/E0212B?text=${label}`;
 }
 
 function discountPct(p) {
