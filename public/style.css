@@ -404,7 +404,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .nav-row { flex-wrap: wrap; }
   .nav-search { order: 3; max-width: none; flex-basis: 100%; }
   .nav-whatsapp span { display: none; }
-  .tagline { display: none; }
 }
 
 /* Interior page hero (How It Works, Find It For Me, Sell, About, Support, Policies) */
