@@ -294,9 +294,8 @@ function renderCart() {
 function updateBadges() {
   const count = cartCount();
   document.getElementById("navCartCount").textContent = count;
-  document.getElementById("stickyCount").textContent = `${count} item(s)`;
-  document.getElementById("stickyTotal").textContent = money(cartTotal());
-  document.getElementById("stickyBar").classList.toggle("visible", count > 0);
+  document.getElementById("cartFabBadge").textContent = count;
+  document.getElementById("cartFab").classList.toggle("visible", count > 0);
 }
 
 // ---------- Cart drawer controls ----------
@@ -324,7 +323,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCart();
 
   document.getElementById("navCartBtn").addEventListener("click", openCart);
-  document.getElementById("stickyViewCart").addEventListener("click", openCart);
+  document.getElementById("cartFab").addEventListener("click", openCart);
   document.getElementById("closeCart").addEventListener("click", closeCart);
   document.getElementById("cartOverlay").addEventListener("click", closeCart);
 
