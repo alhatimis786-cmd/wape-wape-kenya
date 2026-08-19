@@ -1,38 +1,8 @@
-// ⚠ PLACEHOLDER — replace with the real business WhatsApp number before going live.
-const WHATSAPP_NUMBER = "254700000000";
-
 const state = {
   category: "All",
   search: "",
-  sort: "featured",
-  cart: JSON.parse(localStorage.getItem("wwk_cart") || "{}") // { productId: qty }
+  sort: "featured"
 };
-
-const money = (n) => "KES " + n.toLocaleString("en-KE");
-
-function saveCart() {
-  localStorage.setItem("wwk_cart", JSON.stringify(state.cart));
-}
-
-function cartCount() {
-  return Object.values(state.cart).reduce((a, b) => a + b, 0);
-}
-
-function cartTotal() {
-  return Object.entries(state.cart).reduce((sum, [id, qty]) => {
-    const p = window.PRODUCTS.find((p) => p.id === id);
-    return sum + (p ? p.price * qty : 0);
-  }, 0);
-}
-
-function imgSrc(product) {
-  return `/images/${product.image}`;
-}
-
-function placeholderFor(product) {
-  const label = encodeURIComponent(product.name);
-  return `https://placehold.co/400x400/ECECF0/E0212B?text=${label}`;
-}
 
 function discountPct(p) {
   if (!p.originalPrice || p.originalPrice <= p.price) return 0;
@@ -284,7 +254,7 @@ function renderTrending() {
 
 function renderCart() {
   const el = document.getElementById("cartItems");
-  const entries = Object.entries(state.cart).filter(([, qty]) => qty > 0);
+  const entries = Object.entries(cartState.cart).filter(([, qty]) => qty > 0);
 
   if (entries.length === 0) {
     el.innerHTML = `<p class="empty-cart">Your cart is empty.</p>`;
@@ -312,6 +282,7 @@ function renderCart() {
         const id = btn.dataset.id;
         if (btn.dataset.action === "inc") addToCart(id);
         else removeOneFromCart(id);
+        renderCart();
       });
     });
   }
@@ -328,25 +299,7 @@ function updateBadges() {
   document.getElementById("stickyBar").classList.toggle("visible", count > 0);
 }
 
-// ---------- Cart actions ----------
-
-function addToCart(id) {
-  const p = window.PRODUCTS.find((p) => p.id === id);
-  if (!p || p.inStock === false) return;
-  state.cart[id] = (state.cart[id] || 0) + 1;
-  saveCart();
-  renderCart();
-}
-
-function removeOneFromCart(id) {
-  if (!state.cart[id]) return;
-  state.cart[id] -= 1;
-  if (state.cart[id] <= 0) delete state.cart[id];
-  saveCart();
-  renderCart();
-}
-
-// ---------- Drawer / modal controls ----------
+// ---------- Cart drawer controls ----------
 
 function openCart() {
   document.getElementById("cartDrawer").classList.add("open");
@@ -355,44 +308,6 @@ function openCart() {
 function closeCart() {
   document.getElementById("cartDrawer").classList.remove("open");
   document.getElementById("cartOverlay").classList.remove("visible");
-}
-function openCheckout() {
-  closeCart();
-  document.getElementById("checkoutModal").classList.add("open");
-  document.getElementById("checkoutOverlay").classList.add("visible");
-}
-function closeCheckout() {
-  document.getElementById("checkoutModal").classList.remove("open");
-  document.getElementById("checkoutOverlay").classList.remove("visible");
-}
-
-// ---------- WhatsApp order ----------
-
-function buildOrderMessage(name, phone, address, payMethod) {
-  const lines = [`Hi Wape Wape Kenya, I'd like to order:`, ``];
-  Object.entries(state.cart).forEach(([id, qty]) => {
-    const p = window.PRODUCTS.find((p) => p.id === id);
-    if (p && qty > 0) lines.push(`• ${p.name} x${qty} — ${money(p.price * qty)}`);
-  });
-  lines.push(``, `Total: ${money(cartTotal())}`, ``);
-  lines.push(`Name: ${name}`, `Phone: ${phone}`, `Delivery: ${address}`, `Payment: ${payMethod}`);
-  return lines.join("\n");
-}
-
-function sendOrderToWhatsApp(e) {
-  e.preventDefault();
-  const name = document.getElementById("custName").value.trim();
-  const phone = document.getElementById("custPhone").value.trim();
-  const address = document.getElementById("custAddress").value.trim();
-  const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
-
-  if (cartCount() === 0) {
-    alert("Your cart is empty — add something first.");
-    return;
-  }
-
-  const msg = encodeURIComponent(buildOrderMessage(name, phone, address, payMethod));
-  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, "_blank");
 }
 
 // ---------- Init ----------
@@ -412,10 +327,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("stickyViewCart").addEventListener("click", openCart);
   document.getElementById("closeCart").addEventListener("click", closeCart);
   document.getElementById("cartOverlay").addEventListener("click", closeCart);
-  document.getElementById("goToCheckout").addEventListener("click", openCheckout);
-  document.getElementById("closeCheckout").addEventListener("click", closeCheckout);
-  document.getElementById("checkoutOverlay").addEventListener("click", closeCheckout);
-  document.getElementById("checkoutForm").addEventListener("submit", sendOrderToWhatsApp);
 
   document.getElementById("navSearchInput").addEventListener("input", (e) => {
     clearTimeout(searchDebounce);

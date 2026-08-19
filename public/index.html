@@ -191,33 +191,12 @@
   <div class="cart-items" id="cartItems"></div>
   <div class="drawer-foot">
     <div class="cart-total"><span>Total</span><span id="cartTotal">KES 0</span></div>
-    <button class="btn btn-primary btn-full" id="goToCheckout">Checkout</button>
+    <a class="btn btn-primary btn-full" href="/checkout.html">Checkout</a>
   </div>
 </aside>
 
-<!-- Checkout modal -->
-<div class="overlay" id="checkoutOverlay"></div>
-<div class="modal" id="checkoutModal">
-  <div class="drawer-head">
-    <h2>Checkout</h2>
-    <button class="close-btn" id="closeCheckout" aria-label="Close checkout">×</button>
-  </div>
-  <form id="checkoutForm">
-    <label>Full name<input type="text" id="custName" required></label>
-    <label>Phone number<input type="tel" id="custPhone" required></label>
-    <label>Delivery area / address<input type="text" id="custAddress" required></label>
-    <fieldset class="pay-methods">
-      <legend>Pay with</legend>
-      <label class="pay-option"><input type="radio" name="payMethod" value="M-Pesa" checked>M-Pesa</label>
-      <label class="pay-option"><input type="radio" name="payMethod" value="Pay on delivery">Pay on delivery</label>
-      <label class="pay-option disabled"><input type="radio" name="payMethod" value="Card" disabled>Card — coming soon</label>
-    </fieldset>
-    <button type="submit" class="btn btn-primary btn-full">Send order on WhatsApp</button>
-    <p class="checkout-note">We'll confirm your order and payment details on WhatsApp — no money leaves your phone until you confirm.</p>
-  </form>
-</div>
-
 <script src="/products.js"></script>
+<script src="/cart.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>
