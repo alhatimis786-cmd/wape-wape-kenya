@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Wape Wape Kenya</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#16171B">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<style>
+  .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+  .admin-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .admin-head h1 { font-size: 1.5rem; }
+  .admin-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  .admin-tab {
+    padding: 9px 16px; border-radius: 999px; border: 1px solid var(--border);
+    font-size: 0.85rem; font-weight: 600; color: var(--text-muted); background: var(--bg);
+  }
+  .admin-tab.active { background: var(--text); color: #fff; border-color: var(--text); }
+  .admin-panel { display: none; }
+  .admin-panel.active { display: block; }
+  .admin-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .admin-table th {
+    text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--border);
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted);
+  }
+  .admin-table td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .admin-empty { color: var(--text-muted); padding: 40px 0; text-align: center; }
+  .status-pill {
+    display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .status-pending { background: #FFF4E5; color: #9A6700; }
+  .status-approved, .status-live, .status-paid, .status-delivered, .status-completed { background: #E6F6EC; color: #178A46; }
+  .status-rejected, .status-failed, .status-cancelled { background: #FDECEC; color: #C01B24; }
+  .status-searching, .status-offers_received, .status-out_for_delivery, .status-assigned { background: #EAF1FF; color: #2A5DBF; }
+  .row-actions { display: flex; gap: 6px; }
+  .row-btn {
+    padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; border: 1px solid var(--border);
+  }
+  .row-btn.approve { background: var(--accent-green); color: #fff; border-color: var(--accent-green); }
+  .row-btn.reject { background: var(--bg); color: var(--accent); border-color: var(--accent); }
+  .admin-gate { max-width: 480px; margin: 80px auto; text-align: center; padding: 0 24px; }
+  .admin-gate p { color: var(--text-muted); margin: 12px 0 20px; }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-row simple">
+    <a href="/" class="brand-block">
+      <svg class="logo-mark" width="34" height="34" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M20 2 A18 18 0 0 1 35.59 29" stroke="#16171B" stroke-width="4" stroke-linecap="round"/>
+        <path d="M35.59 29 A18 18 0 0 1 4.41 29" stroke="#E0212B" stroke-width="4" stroke-linecap="round"/>
+        <path d="M4.41 29 A18 18 0 0 1 20 2" stroke="#178A46" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="20" cy="20" r="12.5" fill="#FFFFFF"/>
+        <text x="20" y="25.5" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="15" fill="#E0212B">W</text>
+      </svg>
+      <span class="brand-text">
+        <span class="brand">Wape<span>Wape</span></span>
+        <span class="tagline">Admin</span>
+      </span>
+    </a>
+    <span class="nav-account" id="navAccountArea"></span>
+  </div>
+</header>
+
+<div id="gateWrap"></div>
+
+<div class="admin-wrap" id="adminWrap" style="display:none;">
+  <div class="admin-head">
+    <h1>Admin Dashboard</h1>
+  </div>
+
+  <div class="admin-tabs">
+    <button class="admin-tab active" data-tab="sellers">Sellers</button>
+    <button class="admin-tab" data-tab="deals">Deals</button>
+    <button class="admin-tab" data-tab="orders">Orders</button>
+    <button class="admin-tab" data-tab="ffm">Find It For Me</button>
+  </div>
+
+  <div class="admin-panel active" id="panel-sellers">
+    <table class="admin-table">
+      <thead><tr><th>Business</th><th>Contact</th><th>Phone</th><th>Category</th><th>Status</th><th>Commission</th><th></th></tr></thead>
+      <tbody id="sellersBody"></tbody>
+    </table>
+    <div class="admin-empty" id="sellersEmpty" style="display:none;">No sellers yet.</div>
+  </div>
+
+  <div class="admin-panel" id="panel-deals">
+    <table class="admin-table">
+      <thead><tr><th>Deal</th><th>Seller</th><th>Category</th><th>Price</th><th>Status</th><th></th></tr></thead>
+      <tbody id="dealsBody"></tbody>
+    </table>
+    <div class="admin-empty" id="dealsEmpty" style="display:none;">No deals submitted yet.</div>
+  </div>
+
+  <div class="admin-panel" id="panel-orders">
+    <table class="admin-table">
+      <thead><tr><th>Customer</th><th>Phone</th><th>Total</th><th>Payment</th><th>Delivery</th><th>Date</th></tr></thead>
+      <tbody id="ordersBody"></tbody>
+    </table>
+    <div class="admin-empty" id="ordersEmpty" style="display:none;">No orders yet.</div>
+  </div>
+
+  <div class="admin-panel" id="panel-ffm">
+    <table class="admin-table">
+      <thead><tr><th>Request</th><th>Customer</th><th>Location</th><th>Budget</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody id="ffmBody"></tbody>
+    </table>
+    <div class="admin-empty" id="ffmEmpty" style="display:none;">No requests yet.</div>
+  </div>
+</div>
+
+<script src="/vendor/supabase.js"></script>
+<script src="/auth.js"></script>
+<script>
+const money = (n) => "KES " + Number(n || 0).toLocaleString("en-KE");
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : "—";
+const statusPill = (s) => `<span class="status-pill status-${s}">${s.replace(/_/g, " ")}</span>`;
+
+async function initAdmin() {
+  const session = await wwkGetSession();
+  const gateWrap = document.getElementById("gateWrap");
+
+  if (!session) {
+    gateWrap.innerHTML = `
+      <div class="admin-gate">
+        <h2>Admin access required</h2>
+        <p>Log in with a WapeWape account that has admin access.</p>
+        <a href="/login.html?redirect=/admin.html" class="btn btn-primary">Log In</a>
+      </div>`;
+    return;
+  }
+
+  const { data: profile } = await wwkGetProfile(session.user.id);
+  if (!profile || profile.role !== "admin") {
+    gateWrap.innerHTML = `
+      <div class="admin-gate">
+        <h2>Admin access required</h2>
+        <p>Your account (${profile ? profile.role : "unknown"}) doesn't have admin access on WapeWape.</p>
+        <a href="/" class="btn btn-primary">Back to WapeWape</a>
+      </div>`;
+    return;
+  }
+
+  document.getElementById("adminWrap").style.display = "block";
+  loadSellers();
+  loadDeals();
+  loadOrders();
+  loadFfm();
+
+  document.querySelectorAll(".admin-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".admin-tab").forEach((t) => t.classList.remove("active"));
+      document.querySelectorAll(".admin-panel").forEach((p) => p.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById("panel-" + tab.dataset.tab).classList.add("active");
+    });
+  });
+}
+
+async function loadSellers() {
+  const { data, error } = await sb.from("sellers").select("*").order("created_at", { ascending: false });
+  const body = document.getElementById("sellersBody");
+  const empty = document.getElementById("sellersEmpty");
+  if (error || !data || data.length === 0) { empty.style.display = "block"; return; }
+  empty.style.display = "none";
+  body.innerHTML = data.map((s) => `
+    <tr>
+      <td><strong>${s.business_name}</strong></td>
+      <td>${s.contact_person}</td>
+      <td>${s.phone}</td>
+      <td>${s.category || "—"}</td>
+      <td>${statusPill(s.status)}</td>
+      <td>${s.commission_rate}%</td>
+      <td>
+        ${s.status === "pending" ? `
+          <div class="row-actions">
+            <button class="row-btn approve" data-id="${s.id}" data-action="approved">Approve</button>
+            <button class="row-btn reject" data-id="${s.id}" data-action="rejected">Reject</button>
+          </div>` : ""}
+      </td>
+    </tr>`).join("");
+
+  body.querySelectorAll("button[data-action]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      await sb.from("sellers").update({ status: btn.dataset.action }).eq("id", btn.dataset.id);
+      loadSellers();
+    });
+  });
+}
+
+async function loadDeals() {
+  const { data, error } = await sb
+    .from("deals")
+    .select("*, sellers(business_name)")
+    .order("submitted_at", { ascending: false });
+  const body = document.getElementById("dealsBody");
+  const empty = document.getElementById("dealsEmpty");
+  if (error || !data || data.length === 0) { empty.style.display = "block"; return; }
+  empty.style.display = "none";
+  body.innerHTML = data.map((d) => `
+    <tr>
+      <td><strong>${d.title}</strong><br><span style="color:var(--text-muted); font-size:0.8rem;">${(d.description || "").slice(0, 80)}</span></td>
+      <td>${d.sellers ? d.sellers.business_name : "—"}</td>
+      <td>${d.category || "—"}</td>
+      <td>${d.price > 0 ? money(d.price) : "—"}</td>
+      <td>${statusPill(d.status)}</td>
+      <td>
+        ${d.status === "pending" ? `
+          <div class="row-actions">
+            <button class="row-btn approve" data-id="${d.id}" data-action="live">Approve</button>
+            <button class="row-btn reject" data-id="${d.id}" data-action="rejected">Reject</button>
+          </div>` : ""}
+      </td>
+    </tr>`).join("");
+
+  body.querySelectorAll("button[data-action]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      const session = await wwkGetSession();
+      await sb.from("deals").update({
+        status: btn.dataset.action,
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: session.user.id
+      }).eq("id", btn.dataset.id);
+      loadDeals();
+    });
+  });
+}
+
+async function loadOrders() {
+  const { data, error } = await sb.from("orders").select("*").order("created_at", { ascending: false });
+  const body = document.getElementById("ordersBody");
+  const empty = document.getElementById("ordersEmpty");
+  if (error || !data || data.length === 0) { empty.style.display = "block"; return; }
+  empty.style.display = "none";
+  body.innerHTML = data.map((o) => `
+    <tr>
+      <td><strong>${o.customer_name}</strong></td>
+      <td>${o.customer_phone}</td>
+      <td>${money(o.total_amount)}</td>
+      <td>${statusPill(o.payment_status)}</td>
+      <td>${statusPill(o.delivery_status)}</td>
+      <td>${fmtDate(o.created_at)}</td>
+    </tr>`).join("");
+}
+
+async function loadFfm() {
+  const { data, error } = await sb.from("find_it_for_me_requests").select("*").order("created_at", { ascending: false });
+  const body = document.getElementById("ffmBody");
+  const empty = document.getElementById("ffmEmpty");
+  if (error || !data || data.length === 0) { empty.style.display = "block"; return; }
+  empty.style.display = "none";
+  body.innerHTML = data.map((r) => `
+    <tr>
+      <td><strong>${r.item_description}</strong></td>
+      <td>${r.customer_name || "—"}</td>
+      <td>${r.location || "—"}</td>
+      <td>${r.budget ? money(r.budget) : "—"}</td>
+      <td>${statusPill(r.status)}</td>
+      <td>${fmtDate(r.created_at)}</td>
+    </tr>`).join("");
+}
+
+initAdmin();
+</script>
+</body>
+</html>
