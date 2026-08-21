@@ -2,8 +2,8 @@
 // (homepage, checkout). Cart is stored in localStorage so it's shared
 // across all pages on the domain.
 
-// ⚠ PLACEHOLDER — replace with the real business WhatsApp number before going live.
-const WHATSAPP_NUMBER = "254700000000";
+// Real business WhatsApp number.
+const WHATSAPP_NUMBER = "254181171147";
 
 const cartState = {
   cart: JSON.parse(localStorage.getItem("wwk_cart") || "{}") // { productId: qty }

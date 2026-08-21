@@ -135,7 +135,7 @@
 <script src="/vendor/supabase.js"></script>
 <script src="/auth.js"></script>
 <script>
-  const WA_NUMBER = "254700000000";
+  const WA_NUMBER = "254181171147";
   const waLink = "https://wa.me/" + WA_NUMBER;
   const navWa = document.getElementById("navWhatsApp");
   const footWa = document.getElementById("footerWhatsApp");
@@ -161,7 +161,7 @@ document.getElementById("findForm").addEventListener("submit", function (e) {
   if (notes) lines.push("Notes: " + notes);
 
   const msg = encodeURIComponent(lines.join("\n"));
-  window.open("https://wa.me/254700000000?text=" + msg, "_blank");
+  window.open("https://wa.me/254181171147?text=" + msg, "_blank");
   document.getElementById("findForm").style.display = "none";
   document.getElementById("findSuccess").classList.add("visible");
 });
