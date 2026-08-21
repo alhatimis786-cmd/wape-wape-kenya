@@ -168,14 +168,45 @@
         </div>
       </div>`;
 
-    document.getElementById("checkoutForm").addEventListener("submit", (e) => {
+    document.getElementById("checkoutForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+      const submitBtn = e.target.querySelector("button[type=submit]");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Placing order…";
+
       const name = document.getElementById("custName").value.trim();
       const phone = document.getElementById("custPhone").value.trim();
       const address = document.getElementById("custAddress").value.trim();
       const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
+
+      const items = entries.map(([id, qty]) => {
+        const p = window.PRODUCTS.find((p) => p.id === id);
+        return p ? { product_id: p.id, name: p.name, qty, price: p.price } : null;
+      }).filter(Boolean);
+
+      const session = await wwkGetSession();
+
+      const { error } = await sb.from("orders").insert({
+        customer_id: session ? session.user.id : null,
+        customer_name: name,
+        customer_phone: phone,
+        delivery_address: address,
+        items: items,
+        total_amount: cartTotal(),
+        payment_method: payMethod,
+        payment_status: "pending",
+        delivery_status: "pending"
+      });
+
+      if (error) {
+        console.error("Order save failed:", error.message);
+      }
+
       const msg = encodeURIComponent(buildOrderMessage(name, phone, address, payMethod));
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, "_blank");
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Send order on WhatsApp";
     });
   }
 
