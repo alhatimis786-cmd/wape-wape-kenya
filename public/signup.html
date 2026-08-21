@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Up — Wape Wape Kenya</title>
+<meta name="description" content="Create your WapeWape account.">
+<meta name="theme-color" content="#E0212B">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span>New deals every week</span><span class="dot">·</span>
+    <span>Bulk-buy discounts</span><span class="dot">·</span>
+    <span>M-Pesa &amp; card accepted</span><span class="dot">·</span>
+    <span>Delivered countrywide</span><span class="dot">·</span>
+    <span>New deals every week</span><span class="dot">·</span>
+    <span>Bulk-buy discounts</span><span class="dot">·</span>
+    <span>M-Pesa &amp; card accepted</span><span class="dot">·</span>
+    <span>Delivered countrywide</span><span class="dot">·</span>
+  </div>
+</div>
+
+<header class="nav">
+  <div class="nav-row simple">
+    <a href="/" class="brand-block">
+      <svg class="logo-mark" width="38" height="38" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M20 2 A18 18 0 0 1 35.59 29" stroke="#16171B" stroke-width="4" stroke-linecap="round"/>
+        <path d="M35.59 29 A18 18 0 0 1 4.41 29" stroke="#E0212B" stroke-width="4" stroke-linecap="round"/>
+        <path d="M4.41 29 A18 18 0 0 1 20 2" stroke="#178A46" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="20" cy="20" r="12.5" fill="#FFFFFF"/>
+        <text x="20" y="25.5" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="15" fill="#E0212B">W</text>
+      </svg>
+      <span class="brand-text">
+        <span class="brand">Wape<span>Wape</span></span>
+        <span class="tagline">Dili Ziendelee</span>
+      </span>
+    </a>
+  </div>
+</header>
+
+<div class="page-hero">
+  <span class="eyebrow">Join WapeWape</span>
+  <h1>Create your account</h1>
+  <p>One account works for shopping, tracking Find It For Me requests, and (once approved) selling.</p>
+</div>
+
+<form class="site-form" id="signupForm">
+  <label>Full name<input type="text" id="suName" required></label>
+  <label>Phone number<input type="tel" id="suPhone" required></label>
+  <label>Email<input type="email" id="suEmail" required></label>
+  <label>Password<input type="password" id="suPassword" minlength="6" required></label>
+  <button type="submit" class="btn btn-primary">Create Account</button>
+  <p id="signupMsg" class="field-hint" style="text-align:center;"></p>
+  <p class="field-hint" style="text-align:center;">Already have an account? <a href="/login.html" style="color:var(--accent); font-weight:600;">Log in</a></p>
+</form>
+
+<div class="form-success" id="signupSuccess">
+  <div class="check">✅</div>
+  <h3>Account created</h3>
+  <p id="signupSuccessMsg">Check your email to confirm your account, then log in.</p>
+  <a href="/login.html" class="btn btn-primary" style="margin-top:16px;">Go to Log In</a>
+</div>
+
+<footer class="footer">
+  <a href="/" class="brand-block">
+    <svg class="logo-mark" width="34" height="34" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M20 2 A18 18 0 0 1 35.59 29" stroke="#16171B" stroke-width="4" stroke-linecap="round"/>
+      <path d="M35.59 29 A18 18 0 0 1 4.41 29" stroke="#E0212B" stroke-width="4" stroke-linecap="round"/>
+      <path d="M4.41 29 A18 18 0 0 1 20 2" stroke="#178A46" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="20" cy="20" r="12.5" fill="#FFFFFF"/>
+      <text x="20" y="25.5" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="15" fill="#E0212B">W</text>
+    </svg>
+    <span class="brand-text">
+      <span class="brand">Wape<span>Wape</span></span>
+      <span class="tagline">Dili Ziendelee</span>
+    </span>
+  </a>
+  <p>Quality goods, honest prices — deals verified before they reach you.</p>
+  <p class="copyright">© 2026 Wape Wape Kenya. A partnership business.</p>
+</footer>
+
+<script src="/vendor/supabase.js"></script>
+<script src="/auth.js"></script>
+<script>
+document.getElementById("signupForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById("signupMsg");
+  msg.textContent = "Creating your account…";
+  msg.style.color = "var(--text-muted)";
+
+  const fullName = document.getElementById("suName").value.trim();
+  const phone = document.getElementById("suPhone").value.trim();
+  const email = document.getElementById("suEmail").value.trim();
+  const password = document.getElementById("suPassword").value;
+
+  const { data, error } = await wwkSignUp({ email, password, fullName, phone });
+
+  if (error) {
+    msg.textContent = error.message;
+    msg.style.color = "var(--accent)";
+    return;
+  }
+
+  document.getElementById("signupForm").style.display = "none";
+  if (data.session) {
+    document.getElementById("signupSuccessMsg").textContent = "You're all set — you're logged in.";
+    document.querySelector("#signupSuccess a").href = "/";
+    document.querySelector("#signupSuccess a").textContent = "Go to WapeWape";
+  }
+  document.getElementById("signupSuccess").classList.add("visible");
+});
+</script>
+</body>
+</html>

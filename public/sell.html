@@ -44,6 +44,7 @@
       </span>
     </a>
     <div class="nav-actions">
+      <span class="nav-account" id="navAccountArea"></span>
       <a href="#" id="navWhatsApp" class="nav-whatsapp" target="_blank" rel="noopener">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.35 5.08L2 22l5.08-1.35A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.6 0-3.09-.44-4.36-1.22l-.31-.19-3.12.82.83-3.04-.2-.32A7.94 7.94 0 0 1 4 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8z"/></svg>
         <span>WhatsApp</span>
@@ -69,6 +70,15 @@
   <p>Got stock to move? Submit your deal, we'll check it against market prices, and once it's verified it goes live to every WapeWape shopper.</p>
 </div>
 
+<div id="authGate" class="content-page" style="text-align:center; display:none;">
+  <p class="lede">You'll need a WapeWape account to register as a seller — it's how you'll access your seller dashboard once approved.</p>
+  <div style="display:flex; gap:12px; justify-content:center; margin-top:20px; flex-wrap:wrap;">
+    <a href="/signup.html?redirect=/sell.html" class="btn btn-primary">Create Account</a>
+    <a href="/login.html?redirect=/sell.html" class="btn btn-ghost">Log In</a>
+  </div>
+</div>
+
+<div id="sellContent" style="display:none;">
 <div class="content-page" style="padding-bottom: 0;">
   <h2>Why Sell With Us</h2>
   <p>WapeWape shoppers come specifically looking for verified deals — not just browsing. Listing through us means your stock gets seen by people ready to buy, backed by a brand they already trust.</p>
@@ -107,12 +117,14 @@
     <textarea id="sellMessage" placeholder="What's the product, how much stock, and what price are you thinking?" required></textarea>
   </label>
   <button type="submit" class="btn btn-primary">Submit Seller Registration</button>
+  <p id="sellMsg" class="field-hint" style="text-align:center;"></p>
 </form>
 
 <div class="form-success" id="sellSuccess">
   <div class="check">✅</div>
-  <h3>Registration sent</h3>
-  <p>We've opened WhatsApp with your details filled in — hit send and our team will review your deal against current market prices.</p>
+  <h3>Registration submitted</h3>
+  <p>Your seller application is saved and pending review — our team checks it against current market prices before approving. We'll be in touch.</p>
+</div>
 </div>
 <footer class="footer">
   <a href="/" class="brand-block">
@@ -140,6 +152,8 @@
   </nav>
   <p class="copyright">© 2026 Wape Wape Kenya. A partnership business.</p>
 </footer>
+<script src="/vendor/supabase.js"></script>
+<script src="/auth.js"></script>
 <script>
   const WA_NUMBER = "254700000000";
   const waLink = "https://wa.me/" + WA_NUMBER;
@@ -149,28 +163,70 @@
   if (footWa) footWa.href = waLink;
 </script>
 <script>
-document.getElementById("sellForm").addEventListener("submit", function (e) {
-  e.preventDefault();
-  const biz = document.getElementById("sellBusiness").value.trim();
-  const contact = document.getElementById("sellContact").value.trim();
-  const phone = document.getElementById("sellPhone").value.trim();
-  const category = document.getElementById("sellCategory").value;
-  const message = document.getElementById("sellMessage").value.trim();
+async function initSellPage() {
+  const session = await wwkGetSession();
+  if (!session) {
+    document.getElementById("authGate").style.display = "block";
+    return;
+  }
+  document.getElementById("sellContent").style.display = "block";
 
-  const lines = [
-    "Hi WapeWape, I'd like to register as a seller:", "",
-    "Business: " + biz,
-    "Contact: " + contact,
-    "Phone: " + phone,
-    "Category: " + category,
-    "Deal details: " + message,
-  ];
+  document.getElementById("sellForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("sellMsg");
+    msg.textContent = "Submitting…";
+    msg.style.color = "var(--text-muted)";
 
-  const msg = encodeURIComponent(lines.join("\n"));
-  window.open("https://wa.me/254700000000?text=" + msg, "_blank");
-  document.getElementById("sellForm").style.display = "none";
-  document.getElementById("sellSuccess").classList.add("visible");
-});
+    const biz = document.getElementById("sellBusiness").value.trim();
+    const contact = document.getElementById("sellContact").value.trim();
+    const phone = document.getElementById("sellPhone").value.trim();
+    const category = document.getElementById("sellCategory").value;
+    const message = document.getElementById("sellMessage").value.trim();
+
+    // Create (or reuse) this user's seller record, pending review.
+    const { data: sellerRow, error: sellerError } = await sb
+      .from("sellers")
+      .upsert(
+        {
+          profile_id: session.user.id,
+          business_name: biz,
+          contact_person: contact,
+          phone: phone,
+          category: category,
+          status: "pending"
+        },
+        { onConflict: "profile_id" }
+      )
+      .select()
+      .single();
+
+    if (sellerError) {
+      msg.textContent = sellerError.message;
+      msg.style.color = "var(--accent)";
+      return;
+    }
+
+    // Mark this profile as a seller so they can see a seller dashboard later.
+    await sb.from("profiles").update({ role: "seller" }).eq("id", session.user.id);
+
+    // Log the pitch as their first deal submission note (kept simple for now).
+    if (sellerRow && message) {
+      await sb.from("deals").insert({
+        seller_id: sellerRow.id,
+        title: biz + " — initial submission",
+        description: message,
+        category: category,
+        price: 0,
+        status: "pending"
+      });
+    }
+
+    document.getElementById("sellForm").style.display = "none";
+    document.getElementById("sellSuccess").classList.add("visible");
+  });
+}
+
+initSellPage();
 </script>
 </body>
 </html>

@@ -82,6 +82,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .nav-search input::placeholder { color: var(--text-muted); }
 
 .nav-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.nav-account { display: flex; align-items: center; gap: 8px; }
+.nav-account-name { font-size: 0.85rem; font-weight: 600; color: var(--text); }
 .nav-whatsapp {
   display: flex; align-items: center; gap: 7px;
   background: var(--bg-elevated); border: 1px solid var(--border);

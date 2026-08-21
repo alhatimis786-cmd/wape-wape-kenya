@@ -44,6 +44,7 @@
       </span>
     </a>
     <div class="nav-actions">
+      <span class="nav-account" id="navAccountArea"></span>
       <a href="#" id="navWhatsApp" class="nav-whatsapp" target="_blank" rel="noopener">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.35 5.08L2 22l5.08-1.35A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.6 0-3.09-.44-4.36-1.22l-.31-.19-3.12.82.83-3.04-.2-.32A7.94 7.94 0 0 1 4 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8z"/></svg>
         <span>WhatsApp</span>
@@ -124,6 +125,8 @@
   </nav>
   <p class="copyright">© 2026 Wape Wape Kenya. A partnership business.</p>
 </footer>
+<script src="/vendor/supabase.js"></script>
+<script src="/auth.js"></script>
 <script>
   const WA_NUMBER = "254700000000";
   const waLink = "https://wa.me/" + WA_NUMBER;
