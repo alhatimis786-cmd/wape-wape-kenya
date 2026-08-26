@@ -153,14 +153,14 @@ function renderGrid() {
       const outOfStock = p.inStock === false;
       return `
       <div class="card${outOfStock ? " out-of-stock" : ""}">
-        <div class="card-img">
+        <a href="/deal.html?id=${p.id}" class="card-img">
           ${cardBadges(p)}
           <img src="${imgSrc(p)}" alt="${p.name}" loading="lazy"
                onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
-        </div>
+        </a>
         <div class="card-body">
           <span class="card-cat">${p.category}</span>
-          <span class="card-name">${p.name}</span>
+          <a href="/deal.html?id=${p.id}" class="card-name">${p.name}</a>
           <div class="price-row">
             ${p.originalPrice ? `<span class="price-was">${money(p.originalPrice)}</span>` : ""}
             <span class="card-price">${money(p.price)}</span>
@@ -200,12 +200,12 @@ function dotdCardHTML(p, tag, modifierClass) {
   return `
     <article class="dotd-card ${modifierClass}">
       <span class="dotd-tag">${tag}</span>
-      <div class="dotd-img">
+      <a href="/deal.html?id=${p.id}" class="dotd-img">
         <img src="${imgSrc(p)}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
-      </div>
+      </a>
       <div class="dotd-body">
         <span class="card-cat">${p.category}</span>
-        <span class="dotd-name">${p.name}</span>
+        <a href="/deal.html?id=${p.id}" class="dotd-name">${p.name}</a>
         <div class="price-row">
           ${p.originalPrice ? `<span class="price-was">${money(p.originalPrice)}</span>` : ""}
           <span class="card-price">${money(p.price)}</span>
