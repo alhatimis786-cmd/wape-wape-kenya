@@ -45,6 +45,7 @@
   .row-btn.approve { background: var(--accent-green); color: #fff; border-color: var(--accent-green); }
   .row-btn.reject { background: var(--bg); color: var(--accent); border-color: var(--accent); }
   .row-btn.feature { background: var(--text); color: #fff; border-color: var(--text); }
+  .row-btn.edit { background: var(--bg); color: var(--text-muted); border-color: var(--border); }
   .admin-gate { max-width: 480px; margin: 80px auto; text-align: center; padding: 0 24px; }
   .admin-gate p { color: var(--text-muted); margin: 12px 0 20px; }
 </style>
@@ -218,8 +219,9 @@ async function loadDeals() {
             <button class="row-btn approve" data-id="${d.id}" data-action="live">Approve</button>
             <button class="row-btn reject" data-id="${d.id}" data-action="rejected">Reject</button>
           ` : ""}
+          <button class="row-btn edit" data-edit-price-id="${d.id}" data-current-price="${d.price}">Edit Price</button>
           ${d.status === "live" && !isFeatured ? `
-            <button class="row-btn feature" data-feature-id="${d.id}">Make Deal of the Day</button>
+            <button class="row-btn feature" data-feature-id="${d.id}" data-current-price="${d.price}">Make Deal of the Day</button>
           ` : ""}
           ${isFeatured ? `
             <button class="row-btn reject" data-unfeature-id="${d.id}">Remove Feature</button>
@@ -242,20 +244,43 @@ async function loadDeals() {
     });
   });
 
+  body.querySelectorAll("button[data-edit-price-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const dealId = btn.dataset.editPriceId;
+      const current = Number(btn.dataset.currentPrice) || 0;
+      const newPrice = prompt("Set the actual selling price for this deal (KES) — what customers will pay:", current > 0 ? current : "");
+      if (newPrice === null) return;
+      const priceNum = Number(newPrice);
+      if (!priceNum || priceNum <= 0) { alert("Enter a valid number greater than 0."); return; }
+
+      btn.disabled = true;
+      await sb.from("deals").update({ price: priceNum }).eq("id", dealId);
+      loadDeals();
+    });
+  });
+
   body.querySelectorAll("button[data-feature-id]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const dealId = btn.dataset.featureId;
-      const marketPrice = prompt("Enter the verified market price for this deal (KES) — this becomes the crossed-out \"was\" price:");
+      const current = Number(btn.dataset.currentPrice) || 0;
+
+      const dealPrice = prompt("What should the deal price be (KES) — what customers pay today?", current > 0 ? current : "");
+      if (dealPrice === null) return;
+      const dealPriceNum = Number(dealPrice);
+      if (!dealPriceNum || dealPriceNum <= 0) { alert("Enter a valid deal price greater than 0."); return; }
+
+      const marketPrice = prompt("What's the verified market price (KES) — this becomes the crossed-out \"was\" price? Must be higher than the deal price.");
       if (marketPrice === null) return;
-      const priceNum = Number(marketPrice);
-      if (!priceNum || priceNum <= 0) { alert("Enter a valid number greater than 0."); return; }
+      const marketPriceNum = Number(marketPrice);
+      if (!marketPriceNum || marketPriceNum <= dealPriceNum) { alert("Market price must be a number greater than the deal price."); return; }
 
       btn.disabled = true;
       // Only one deal can be "today's deal" — clear any other one first.
       await sb.from("deals").update({ featured_date: null }).eq("featured_date", todayStr);
       await sb.from("deals").update({
         featured_date: todayStr,
-        original_price: priceNum,
+        price: dealPriceNum,
+        original_price: marketPriceNum,
         status: "live"
       }).eq("id", dealId);
       loadDeals();
