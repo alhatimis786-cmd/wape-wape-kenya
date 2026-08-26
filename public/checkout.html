@@ -100,7 +100,7 @@
 
 <script src="/vendor/supabase.js"></script>
 <script src="/auth.js"></script>
-<script src="/products.js"></script>
+<script src="/catalog.js"></script>
 <script src="/cart.js"></script>
 <script>
   const waLink = "https://wa.me/" + WHATSAPP_NUMBER;
@@ -198,7 +198,7 @@
     });
   }
 
-  renderCheckout();
+  window.catalogReady.then(renderCheckout);
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});

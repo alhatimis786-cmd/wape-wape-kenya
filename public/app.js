@@ -343,7 +343,8 @@ function applyUrlParams() {
   if (q) state.search = q;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await window.catalogReady;
   applyUrlParams();
 
   renderDealOfDay();

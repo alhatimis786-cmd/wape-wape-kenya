@@ -174,12 +174,12 @@
 <script src="/vendor/supabase.js"></script>
 <script src="/auth.js"></script>
 <script src="/nav.js"></script>
-<script src="/products.js"></script>
+<script src="/catalog.js"></script>
 <script src="/cart.js"></script>
 <script>
 const params = new URLSearchParams(window.location.search);
 const productId = params.get("id");
-const product = window.PRODUCTS.find((p) => p.id === productId);
+let product = null;
 const wrap = document.getElementById("dealWrap");
 
 function discountPct(p) {
@@ -369,7 +369,10 @@ function renderRelated() {
     </a>`).join("");
 }
 
-renderDeal();
+window.catalogReady.then(() => {
+  product = window.PRODUCTS.find((p) => p.id === productId);
+  renderDeal();
+});
 updateCartCount();
 
 const waLink = "https://wa.me/" + WHATSAPP_NUMBER;

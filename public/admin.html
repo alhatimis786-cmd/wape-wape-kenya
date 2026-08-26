@@ -44,6 +44,7 @@
   }
   .row-btn.approve { background: var(--accent-green); color: #fff; border-color: var(--accent-green); }
   .row-btn.reject { background: var(--bg); color: var(--accent); border-color: var(--accent); }
+  .row-btn.feature { background: var(--text); color: #fff; border-color: var(--text); }
   .admin-gate { max-width: 480px; margin: 80px auto; text-align: center; padding: 0 24px; }
   .admin-gate p { color: var(--text-muted); margin: 12px 0 20px; }
 </style>
@@ -199,21 +200,34 @@ async function loadDeals() {
   const empty = document.getElementById("dealsEmpty");
   if (error || !data || data.length === 0) { empty.style.display = "block"; return; }
   empty.style.display = "none";
-  body.innerHTML = data.map((d) => `
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  body.innerHTML = data.map((d) => {
+    const isFeatured = d.featured_date === todayStr;
+    return `
     <tr>
       <td><strong>${d.title}</strong><br><span style="color:var(--text-muted); font-size:0.8rem;">${(d.description || "").slice(0, 80)}</span></td>
       <td>${d.sellers ? d.sellers.business_name : "—"}</td>
       <td>${d.category || "—"}</td>
-      <td>${d.price > 0 ? money(d.price) : "—"}</td>
-      <td>${statusPill(d.status)}</td>
+      <td>${d.price > 0 ? money(d.price) : "—"}${d.original_price ? `<br><span style="color:var(--text-muted); font-size:0.78rem; text-decoration:line-through;">${money(d.original_price)}</span>` : ""}</td>
+      <td>${statusPill(d.status)}${isFeatured ? `<br><span class="status-pill status-live" style="margin-top:4px;">★ Today's Deal</span>` : ""}</td>
       <td>
-        ${d.status === "pending" ? `
-          <div class="row-actions">
+        <div class="row-actions">
+          ${d.status === "pending" ? `
             <button class="row-btn approve" data-id="${d.id}" data-action="live">Approve</button>
             <button class="row-btn reject" data-id="${d.id}" data-action="rejected">Reject</button>
-          </div>` : ""}
+          ` : ""}
+          ${d.status === "live" && !isFeatured ? `
+            <button class="row-btn feature" data-feature-id="${d.id}">Make Deal of the Day</button>
+          ` : ""}
+          ${isFeatured ? `
+            <button class="row-btn reject" data-unfeature-id="${d.id}">Remove Feature</button>
+          ` : ""}
+        </div>
       </td>
-    </tr>`).join("");
+    </tr>`;
+  }).join("");
 
   body.querySelectorAll("button[data-action]").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -224,6 +238,34 @@ async function loadDeals() {
         reviewed_at: new Date().toISOString(),
         reviewed_by: session.user.id
       }).eq("id", btn.dataset.id);
+      loadDeals();
+    });
+  });
+
+  body.querySelectorAll("button[data-feature-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const dealId = btn.dataset.featureId;
+      const marketPrice = prompt("Enter the verified market price for this deal (KES) — this becomes the crossed-out \"was\" price:");
+      if (marketPrice === null) return;
+      const priceNum = Number(marketPrice);
+      if (!priceNum || priceNum <= 0) { alert("Enter a valid number greater than 0."); return; }
+
+      btn.disabled = true;
+      // Only one deal can be "today's deal" — clear any other one first.
+      await sb.from("deals").update({ featured_date: null }).eq("featured_date", todayStr);
+      await sb.from("deals").update({
+        featured_date: todayStr,
+        original_price: priceNum,
+        status: "live"
+      }).eq("id", dealId);
+      loadDeals();
+    });
+  });
+
+  body.querySelectorAll("button[data-unfeature-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      await sb.from("deals").update({ featured_date: null, original_price: null }).eq("id", btn.dataset.unfeatureId);
       loadDeals();
     });
   });
