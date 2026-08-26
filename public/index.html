@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Caveat:wght@600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -74,38 +74,85 @@
   <section class="verified-hero">
     <div class="verified-hero-content">
       <h1>Real Deals.<br>Every Day.</h1>
-      <p>Not inflated prices pretending to be discounts. Every deal is independently checked before it goes live.</p>
-      <a href="#shop" class="btn btn-primary">Shop Verified Deals</a>
+      <p>Not inflated prices pretending to be discounts.<br><span class="hero-highlight">Every WapeWape deal is independently checked before it goes live.</span></p>
+      <a href="#shop" class="btn btn-primary">Shop Verified Deals <span aria-hidden="true">&rsaquo;</span></a>
       <div class="trust-icons">
         <div class="trust-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          <span>Verified Suppliers</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+          <span>Trusted Suppliers</span>
         </div>
         <div class="trust-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-          <span>Best Prices</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41L11 22l-9-9L11 4h9v9z"/><circle cx="14.5" cy="8.5" r="1.5"/></svg>
+          <span>Verified Prices</span>
         </div>
         <div class="trust-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>
           <span>Verified Stock</span>
         </div>
-        <div class="trust-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>Safe Payments</span>
-        </div>
       </div>
     </div>
-    <div class="verified-badge">
-      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
-      <span class="verified-badge-title">Verified Deal</span>
-      <span class="verified-badge-sub">Genuine. Checked. Trusted.</span>
+    <div class="verified-shield-wrap">
+      <svg class="verified-shield" width="260" height="300" viewBox="0 0 260 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M130 8 L246 46 V150 C246 220 196 268 130 292 C64 268 14 220 14 150 V46 Z" stroke="#16171B" stroke-width="4" fill="#fff"/>
+        <circle cx="130" cy="62" r="30" fill="#178A46"/>
+        <path d="M116 62l10 10 20-20" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <text x="130" y="140" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="22" fill="#16171B">WAPEWAPE</text>
+        <text x="130" y="172" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="26" fill="#178A46">VERIFIED</text>
+        <text x="130" y="202" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="26" fill="#16171B">DEAL</text>
+        <path d="M25 218 H235 L220 240 H40 Z" fill="#178A46"/>
+        <text x="130" y="233" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-weight="600" font-size="8.5" letter-spacing="0.3" fill="#fff">GENUINE. CHECKED. TRUSTED.</text>
+      </svg>
+      <p class="shield-caption">If it's not a genuine deal,<br>it doesn't go on WapeWape.</p>
+      <p class="shield-signature">Dili Ziendelee.</p>
+    </div>
+  </section>
+
+  <section class="why-trust">
+    <h2>Why Trust a <span>WapeWape</span> Deal?</h2>
+    <div class="why-trust-grid">
+      <div class="why-trust-item">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M8 11l2 2 4-4"/></svg>
+        <span class="why-trust-title">Price Checked</span>
+        <span class="why-trust-desc">We compare against real market pricing</span>
+      </div>
+      <div class="why-trust-item">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        <span class="why-trust-title">Supplier Checked</span>
+        <span class="why-trust-desc">We work only with trusted suppliers</span>
+      </div>
+      <div class="why-trust-item">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>
+        <span class="why-trust-title">Stock Checked</span>
+        <span class="why-trust-desc">We don't advertise what isn't available</span>
+      </div>
+      <div class="why-trust-item">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41L11 22l-9-9L11 4h9v9z"/><circle cx="14.5" cy="8.5" r="1.5"/></svg>
+        <span class="why-trust-title">Deal Checked</span>
+        <span class="why-trust-desc">If the saving isn't genuine, it doesn't qualify</span>
+      </div>
+      <div class="why-trust-item">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <span class="why-trust-title">No Fake Pricing</span>
+        <span class="why-trust-desc">No inflated prices. No misleading "was/now" tricks.</span>
+      </div>
+      <div class="why-trust-item">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <span class="why-trust-title">Safe &amp; Secure</span>
+        <span class="why-trust-desc">Secure payments and buyer protection</span>
+      </div>
     </div>
   </section>
 
   <section class="dotd" id="dealOfDay">
     <div class="dotd-head">
-      <span class="eyebrow">A new deal, every day</span>
-      <h2>Deal of the Day</h2>
+      <div>
+        <span class="eyebrow">A new deal, every day</span>
+        <h2>Deal of the Day</h2>
+      </div>
+      <div class="dotd-countdown">
+        <span class="dotd-countdown-label">Ends in</span>
+        <span class="dotd-countdown-time" id="dotdCountdown">--:--:--</span>
+      </div>
     </div>
     <div class="dotd-row" id="dotdRow"></div>
   </section>

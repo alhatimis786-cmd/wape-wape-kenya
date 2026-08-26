@@ -182,52 +182,71 @@ function renderDealOfDay() {
   const row = document.getElementById("dotdRow");
   if (!row || !deals || !deals.today) return;
 
-  const find = (id) => window.PRODUCTS.find((p) => p.id === id);
-  const todayP = find(deals.today);
-  const yesterdayP = find(deals.yesterday);
-  const tomorrowP = find(deals.tomorrow);
+  const todayP = window.PRODUCTS.find((p) => p.id === deals.today);
+  if (!todayP) return;
 
-  const cards = [];
-  if (yesterdayP) cards.push(dotdCardHTML(yesterdayP, "Yesterday", "dotd-past"));
-  if (todayP) cards.push(dotdCardHTML(todayP, "Today", "dotd-featured"));
-  if (tomorrowP) cards.push(dotdLockedCardHTML(tomorrowP));
+  const pct = discountPct(todayP);
+  const highlightsHtml = (todayP.highlights || []).slice(0, 4).map((h) => `
+    <li>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+      ${h}
+    </li>`).join("");
 
-  row.innerHTML = cards.join("");
-  wireProductButtons(row);
-}
-
-function dotdCardHTML(p, tag, modifierClass) {
-  return `
-    <article class="dotd-card ${modifierClass}">
-      <span class="dotd-tag">${tag}</span>
-      <a href="/deal.html?id=${p.id}" class="dotd-img">
-        <img src="${imgSrc(p)}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
+  row.innerHTML = `
+    <article class="dotd-card dotd-featured">
+      <a href="/deal.html?id=${todayP.id}" class="dotd-img">
+        <span class="dotd-tag">Today Only</span>
+        <img src="${imgSrc(todayP)}" alt="${todayP.name}" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(todayP)}'">
+        <span class="dotd-verified-tag">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+          WapeWape Verified
+        </span>
       </a>
       <div class="dotd-body">
-        <span class="card-cat">${p.category}</span>
-        <a href="/deal.html?id=${p.id}" class="dotd-name">${p.name}</a>
-        <div class="price-row">
-          ${p.originalPrice ? `<span class="price-was">${money(p.originalPrice)}</span>` : ""}
-          <span class="card-price">${money(p.price)}</span>
+        <span class="card-cat">${todayP.category}</span>
+        <a href="/deal.html?id=${todayP.id}" class="dotd-name">${todayP.name}</a>
+        ${highlightsHtml ? `<ul class="dotd-highlights">${highlightsHtml}</ul>` : ""}
+        <div class="dotd-featured-actions">
+          <a href="/deal.html?id=${todayP.id}" class="btn btn-primary">View Deal</a>
+          <button class="btn btn-ghost" id="dotdAddToCart">Add to Cart</button>
         </div>
-        ${cardActionsHTML(p)}
+      </div>
+      <div class="dotd-pricing">
+        ${todayP.originalPrice ? `
+        <div>
+          <span class="dotd-price-label">Typical Market Price</span>
+          <span class="dotd-market-price">${money(todayP.originalPrice)}</span>
+        </div>` : ""}
+        <div>
+          <span class="dotd-price-label">WapeWape Price</span>
+          <span class="dotd-deal-price">${money(todayP.price)}</span>
+        </div>
+        ${pct > 0 ? `<span class="dotd-savings">You Save ${money(todayP.originalPrice - todayP.price)} (${pct}%)</span>` : ""}
+        <div class="dotd-verify-note">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Price verified against current market pricing.
+        </div>
       </div>
     </article>`;
+
+  document.getElementById("dotdAddToCart").addEventListener("click", () => addToCart(todayP.id));
+  startDotdCountdown();
 }
 
-function dotdLockedCardHTML(p) {
-  return `
-    <article class="dotd-card dotd-locked">
-      <span class="dotd-tag">Tomorrow</span>
-      <div class="dotd-img">
-        <img src="${imgSrc(p)}" alt="Mystery deal" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
-        <div class="dotd-lock-overlay"><span class="lock-q">?</span></div>
-      </div>
-      <div class="dotd-body">
-        <span class="dotd-name">Tomorrow's deal</span>
-        <span class="stock-note">Revealed at midnight</span>
-      </div>
-    </article>`;
+function startDotdCountdown() {
+  const el = document.getElementById("dotdCountdown");
+  if (!el) return;
+  const tick = () => {
+    const now = new Date();
+    const midnight = new Date(now); midnight.setHours(24, 0, 0, 0);
+    const diff = midnight - now;
+    const h = String(Math.floor(diff / 3600000)).padStart(2, "0");
+    const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0");
+    const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, "0");
+    el.textContent = `${h}:${m}:${s}`;
+  };
+  tick();
+  setInterval(tick, 1000);
 }
 
 function renderTrending() {
