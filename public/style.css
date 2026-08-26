@@ -113,6 +113,44 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .nav-primary a.active { color: var(--accent); border-color: var(--accent); }
 .nav-primary a.find-it-link.active { color: var(--accent-green); border-color: var(--accent-green); }
 
+.nav-dropdown { position: relative; flex-shrink: 0; }
+.nav-dropdown-trigger {
+  display: flex; align-items: center; gap: 5px; font-family: inherit; background: none; border: none; cursor: pointer;
+  padding-bottom: 12px; font-size: 0.86rem; font-weight: 600; color: var(--text-muted);
+  border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; white-space: nowrap;
+}
+.nav-dropdown-trigger:hover, .nav-dropdown.open .nav-dropdown-trigger { color: var(--accent); border-color: var(--accent); }
+.nav-dropdown-trigger .chevron { transition: transform 0.15s; }
+.nav-dropdown.open .nav-dropdown-trigger .chevron { transform: rotate(180deg); }
+.nav-dropdown-panel {
+  position: fixed; margin-top: 12px; background: #fff; border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: 0 16px 36px rgba(22,23,27,0.14); padding: 18px; z-index: 60;
+  min-width: 460px; display: none; grid-template-columns: 1fr 1fr; gap: 28px;
+}
+.nav-dropdown.open .nav-dropdown-panel { display: grid; }
+.dropdown-col { display: flex; flex-direction: column; gap: 1px; }
+.dropdown-col-title {
+  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);
+  font-weight: 700; margin-bottom: 8px; padding: 0 10px;
+}
+.dropdown-col a {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px;
+  font-size: 0.86rem; font-weight: 500; color: var(--text); transition: background 0.15s; white-space: nowrap;
+}
+.dropdown-col a:hover { background: var(--bg-elevated); }
+.dropdown-col a svg { color: var(--accent); flex-shrink: 0; }
+
+@media (max-width: 720px) {
+  .nav-dropdown-panel {
+    position: fixed; top: auto; left: 0; right: 0; bottom: 0; margin-top: 0;
+    border-radius: 18px 18px 0 0; min-width: 0; grid-template-columns: 1fr 1fr;
+    max-height: 75vh; overflow-y: auto; box-shadow: 0 -8px 30px rgba(22,23,27,0.18);
+  }
+}
+@media (max-width: 460px) {
+  .nav-dropdown-panel { grid-template-columns: 1fr; }
+}
+
 .nav-categories {
   display: flex; gap: 4px; overflow-x: auto; padding: 12px 24px 12px;
   max-width: 1200px; margin: 0 auto; scrollbar-width: none;

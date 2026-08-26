@@ -332,7 +332,20 @@ function closeCart() {
 
 let searchDebounce;
 
+function applyUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const cat = params.get("cat");
+  const sort = params.get("sort");
+  const q = params.get("q");
+  const validCats = new Set(window.PRODUCTS.map((p) => p.category));
+  if (cat && validCats.has(cat)) state.category = cat;
+  if (sort) state.sort = sort;
+  if (q) state.search = q;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  applyUrlParams();
+
   renderDealOfDay();
   renderTrending();
   renderNavCategories();
@@ -340,6 +353,9 @@ document.addEventListener("DOMContentLoaded", () => {
   renderSidebar();
   renderGrid();
   renderCart();
+
+  document.getElementById("navSearchInput").value = state.search;
+  document.getElementById("sortSelect").value = state.sort;
 
   document.getElementById("navCartBtn").addEventListener("click", openCart);
   document.getElementById("cartFab").addEventListener("click", openCart);
