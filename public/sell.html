@@ -224,8 +224,12 @@ async function initSellPage() {
       return;
     }
 
-    // Mark this profile as a seller so they can see a seller dashboard later.
-    await sb.from("profiles").update({ role: "seller" }).eq("id", session.user.id);
+    // Mark this profile as a seller — but only if they're a plain shopper.
+    // Never downgrade an admin (or any other elevated role) to "seller".
+    const { data: currentProfile } = await sb.from("profiles").select("role").eq("id", session.user.id).single();
+    if (currentProfile && currentProfile.role === "shopper") {
+      await sb.from("profiles").update({ role: "seller" }).eq("id", session.user.id);
+    }
 
     // Log the pitch as their first deal submission note (kept simple for now).
     if (sellerRow && message) {
