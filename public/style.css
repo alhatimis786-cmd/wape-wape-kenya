@@ -554,4 +554,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 @media (max-width: 640px) {
   .cart-fab.visible { display: flex; }
   .footer { padding-bottom: 110px; }
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .card-body { padding: 10px; gap: 5px; }
+  .card-name { font-size: 0.84rem; }
+  .card-price { font-size: 0.88rem; }
+}
+
+@media (max-width: 360px) {
+  .grid { gap: 8px; }
 }
