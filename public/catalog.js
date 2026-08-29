@@ -21,6 +21,15 @@ window.catalogReady = (async function loadCatalog() {
     return;
   }
 
+  // Seller names come from the public_sellers view (name + category only —
+  // phone/contact stay private), fetched separately and merged in below.
+  const sellerIds = [...new Set((data || []).map((d) => d.seller_id).filter(Boolean))];
+  let sellerMap = {};
+  if (sellerIds.length) {
+    const { data: sellers } = await sb.from("public_sellers").select("id, business_name").in("id", sellerIds);
+    (sellers || []).forEach((s) => { sellerMap[s.id] = s.business_name; });
+  }
+
   const todayStr = new Date().toISOString().slice(0, 10);
   let todayId = null;
 
@@ -37,7 +46,9 @@ window.catalogReady = (async function loadCatalog() {
       stockCount: d.stock_count,
       highlights: Array.isArray(d.highlights) ? d.highlights : [],
       dateAdded: d.submitted_at,
-      image: d.image_url
+      image: d.image_url,
+      sellerId: d.seller_id,
+      sellerName: sellerMap[d.seller_id] || null
     };
   });
 

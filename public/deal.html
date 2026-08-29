@@ -231,6 +231,7 @@ function renderDeal() {
       </div>
       <div class="deal-info">
         <span class="deal-category">${product.category}</span>
+        ${product.sellerId && product.sellerName ? `<a href="/seller.html?id=${product.sellerId}" style="display:block; font-size:0.82rem; color:var(--accent); font-weight:600; margin-top:2px;">Sold by ${product.sellerName} &rsaquo;</a>` : ""}
         <h1 class="deal-name">${product.name}</h1>
 
         <div class="deal-price-block">

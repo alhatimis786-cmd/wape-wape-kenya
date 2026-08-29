@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Seller — Wape Wape Kenya</title>
+<meta name="description" id="pageDesc" content="Browse products from this WapeWape seller.">
+<meta name="theme-color" content="#E0212B">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<style>
+  .seller-hero { max-width: 1100px; margin: 0 auto; padding: 40px 24px 8px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .seller-avatar {
+    width: 64px; height: 64px; border-radius: 50%; background: var(--bg-elevated); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700;
+    font-size: 1.5rem; color: var(--accent); flex-shrink: 0;
+  }
+  .seller-hero h1 { font-size: 1.5rem; margin-bottom: 4px; }
+  .seller-hero .seller-meta { color: var(--text-muted); font-size: 0.88rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .verified-chip { display: inline-flex; align-items: center; gap: 4px; color: var(--accent-green); font-weight: 600; font-size: 0.8rem; }
+  .seller-shop-wrap { max-width: 1100px; margin: 0 auto; padding: 24px 24px 60px; }
+  .not-found { max-width: 500px; margin: 100px auto; text-align: center; padding: 0 24px; }
+</style>
+</head>
+<body>
+
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span>New deals every week</span><span class="dot">·</span>
+    <span>Bulk-buy discounts</span><span class="dot">·</span>
+    <span>M-Pesa &amp; card accepted</span><span class="dot">·</span>
+    <span>Delivered countrywide</span><span class="dot">·</span>
+    <span>New deals every week</span><span class="dot">·</span>
+    <span>Bulk-buy discounts</span><span class="dot">·</span>
+    <span>M-Pesa &amp; card accepted</span><span class="dot">·</span>
+    <span>Delivered countrywide</span><span class="dot">·</span>
+  </div>
+</div>
+
+<header class="nav">
+  <div class="nav-row simple">
+    <a href="/" class="brand-block">
+      <img class="logo-mark" src="/images/brand/logo-mark.png" width="38" height="38" alt="WapeWape logo">
+      <span class="brand-text">
+        <span class="brand">Wape<span>Wape</span></span>
+        <span class="tagline">Dili Ziendelee</span>
+      </span>
+    </a>
+    <span class="nav-account" id="navAccountArea"></span>
+  </div>
+  <nav class="nav-primary" aria-label="Site">
+    <a href="/#shop">Deals</a>
+    <a href="/#dealOfDay">Deal of the Day</a>
+    <a href="/how-it-works.html">How It Works</a>
+    <a href="/find-it-for-me.html" class="find-it-link">Find It For Me</a>
+    <a href="/sell.html">Sell With WapeWape</a>
+  </nav>
+</header>
+
+<div id="sellerWrap"></div>
+
+<footer class="footer">
+  <a href="/" class="brand-block">
+    <img class="logo-mark" src="/images/brand/logo-mark.png" width="34" height="34" alt="WapeWape logo">
+    <span class="brand-text">
+      <span class="brand">Wape<span>Wape</span></span>
+      <span class="tagline">Dili Ziendelee</span>
+    </span>
+  </a>
+  <p>Quality goods, honest prices — deals verified before they reach you.</p>
+  <a href="#" id="footerWhatsApp" class="btn btn-primary" target="_blank" rel="noopener">Talk to us on WhatsApp</a>
+  <nav class="footer-links" aria-label="Footer">
+    <a href="/how-it-works.html">How It Works</a>
+    <a href="/find-it-for-me.html">Find It For Me</a>
+    <a href="/sell.html">Sell With WapeWape</a>
+    <a href="/about.html">About Us</a>
+    <a href="/support.html">Support</a>
+    <a href="/policies.html">Policies</a>
+  </nav>
+  <p class="copyright">© 2026 Wape Wape Kenya. A partnership business.</p>
+</footer>
+
+<script src="/vendor/supabase.js"></script>
+<script src="/auth.js"></script>
+<script src="/cart.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const sellerId = params.get("id");
+const wrap = document.getElementById("sellerWrap");
+
+async function renderSellerPage() {
+  if (!sellerId) {
+    showNotFound();
+    return;
+  }
+
+  const { data: seller, error: sellerError } = await sb
+    .from("public_sellers")
+    .select("id, business_name, category")
+    .eq("id", sellerId)
+    .single();
+
+  if (sellerError || !seller) {
+    showNotFound();
+    return;
+  }
+
+  const { data: deals, error: dealsError } = await sb
+    .from("deals")
+    .select("*")
+    .eq("seller_id", sellerId)
+    .eq("status", "live")
+    .order("submitted_at", { ascending: false });
+
+  const products = (deals || []).map((d) => ({
+    id: d.id,
+    name: d.title,
+    category: d.category,
+    price: Number(d.price),
+    originalPrice: d.original_price ? Number(d.original_price) : null,
+    hot: !!d.hot,
+    inStock: d.in_stock !== false,
+    stockCount: d.stock_count,
+    highlights: Array.isArray(d.highlights) ? d.highlights : [],
+    image: d.image_url
+  }));
+
+  // cart.js looks products up by ID in window.PRODUCTS — populate it with
+  // this seller's catalog so Add to Cart works correctly on this page.
+  window.PRODUCTS = products;
+
+  document.getElementById("pageTitle").textContent = seller.business_name + " — Wape Wape Kenya";
+  document.getElementById("pageDesc").content = "Shop everything from " + seller.business_name + " on Wape Wape Kenya.";
+
+  const initials = seller.business_name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+
+  wrap.innerHTML = `
+    <div class="seller-hero">
+      <div class="seller-avatar">${initials}</div>
+      <div>
+        <h1>${seller.business_name}</h1>
+        <div class="seller-meta">
+          <span>${seller.category || "General"}</span>
+          <span>·</span>
+          <span>${products.length} product${products.length === 1 ? "" : "s"}</span>
+          <span class="verified-chip">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            WapeWape Verified Seller
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="seller-shop-wrap">
+      <div class="grid" id="sellerGrid"></div>
+      ${products.length === 0 ? `<p class="no-results">This seller doesn't have any live products right now — check back soon.</p>` : ""}
+    </div>
+  `;
+
+  const grid = document.getElementById("sellerGrid");
+  grid.innerHTML = products.map((p) => {
+    const outOfStock = p.inStock === false;
+    const pct = (p.originalPrice && p.originalPrice > p.price) ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
+    return `
+    <div class="card${outOfStock ? " out-of-stock" : ""}">
+      <a href="/deal.html?id=${p.id}" class="card-img">
+        ${pct > 0 ? `<div class="card-badges"><span class="badge badge-discount">-${pct}%</span></div>` : ""}
+        <img src="/images/${p.image}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/400x400/ECECF0/E0212B?text=${encodeURIComponent(p.name)}'">
+      </a>
+      <div class="card-body">
+        <span class="card-cat">${p.category}</span>
+        <a href="/deal.html?id=${p.id}" class="card-name">${p.name}</a>
+        <div class="price-row">
+          ${p.originalPrice ? `<span class="price-was">${money(p.originalPrice)}</span>` : ""}
+          <span class="card-price">${money(p.price)}</span>
+        </div>
+        <span class="stock-note">${outOfStock ? "Restocking soon" : "In stock"}</span>
+        <div class="card-actions">
+          <button class="add-btn" data-id="${p.id}" aria-label="Add ${p.name} to cart"${outOfStock ? " disabled" : ""}>+</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+
+  grid.querySelectorAll(".add-btn:not(:disabled)").forEach((btn) => {
+    btn.addEventListener("click", () => addToCart(btn.dataset.id));
+  });
+}
+
+function showNotFound() {
+  wrap.innerHTML = `
+    <div class="not-found">
+      <h2>Seller not found</h2>
+      <p style="color:var(--text-muted); margin:12px 0 20px;">This seller page doesn't exist or isn't public yet.</p>
+      <a href="/#shop" class="btn btn-primary">Browse all deals</a>
+    </div>`;
+}
+
+renderSellerPage();
+
+const waLink = "https://wa.me/" + WHATSAPP_NUMBER;
+document.getElementById("footerWhatsApp").href = waLink;
+</script>
+</body>
+</html>
