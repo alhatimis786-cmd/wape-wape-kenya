@@ -231,8 +231,8 @@ async function loadDeals() {
   empty.style.display = "none";
   body.innerHTML = data.map((d) => `
     <tr>
-      <td><strong>${d.title}</strong></td>
-      <td>${d.category || "—"}</td>
+      <td><strong>${escapeHtml(d.title)}</strong></td>
+      <td>${escapeHtml(d.category) || "—"}</td>
       <td>${d.price > 0 ? money(d.price) : "—"} <span class="price-locked" title="Only WapeWape can change this once submitted">🔒</span></td>
       <td>${statusPill(d.status)}</td>
     </tr>`).join("");

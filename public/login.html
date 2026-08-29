@@ -87,7 +87,12 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   }
 
   const params = new URLSearchParams(window.location.search);
-  window.location.href = params.get("redirect") || "/";
+  const redirectTo = params.get("redirect");
+  // Only follow the redirect if it's a genuine relative path on this site —
+  // never an absolute URL, which could otherwise be used to send someone to
+  // a phishing page right after they type in their real password.
+  const isSafeRedirect = redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//") && !redirectTo.includes("://");
+  window.location.href = isSafeRedirect ? redirectTo : "/";
 });
 </script>
 </body>

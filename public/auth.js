@@ -3,6 +3,20 @@ const SUPABASE_URL = "https://dwhcjtidbguhtbetapqa.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Ql_XwB2OmUg6fgDfpZCl3Q_rDmTP6Oj";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Escapes any user- or database-supplied text before it's inserted into
+// innerHTML. Without this, a malicious customer/seller name, product title,
+// or address could contain a <script> tag or event-handler attribute that
+// executes in the browser of whoever views it next — including an admin.
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 async function wwkSignUp({ email, password, fullName, phone }) {
   return sb.auth.signUp({
     email,

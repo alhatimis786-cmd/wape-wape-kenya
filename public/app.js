@@ -37,11 +37,12 @@ const CHAT_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" s
 function cardActionsHTML(p) {
   const liked = isLiked(p.id);
   const outOfStock = p.inStock === false;
+  const safeName = escapeHtml(p.name);
   return `
     <div class="card-actions">
-      <button class="icon-btn like-btn${liked ? " liked" : ""}" data-id="${p.id}" aria-label="Save ${p.name}" aria-pressed="${liked}">${HEART_ICON}</button>
-      <button class="icon-btn ask-btn" data-id="${p.id}" aria-label="Ask about ${p.name}">${CHAT_ICON}</button>
-      <button class="add-btn" data-id="${p.id}" aria-label="Add ${p.name} to cart"${outOfStock ? " disabled" : ""}>+</button>
+      <button class="icon-btn like-btn${liked ? " liked" : ""}" data-id="${p.id}" aria-label="Save ${safeName}" aria-pressed="${liked}">${HEART_ICON}</button>
+      <button class="icon-btn ask-btn" data-id="${p.id}" aria-label="Ask about ${safeName}">${CHAT_ICON}</button>
+      <button class="add-btn" data-id="${p.id}" aria-label="Add ${safeName} to cart"${outOfStock ? " disabled" : ""}>+</button>
     </div>`;
 }
 
@@ -151,16 +152,17 @@ function renderGrid() {
     noResults.hidden = true;
     grid.innerHTML = items.map((p) => {
       const outOfStock = p.inStock === false;
+      const safeName = escapeHtml(p.name);
       return `
       <div class="card${outOfStock ? " out-of-stock" : ""}">
         <a href="/deal.html?id=${p.id}" class="card-img">
           ${cardBadges(p)}
-          <img src="${imgSrc(p)}" alt="${p.name}" loading="lazy"
+          <img src="${imgSrc(p)}" alt="${safeName}" loading="lazy"
                onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
         </a>
         <div class="card-body">
-          <span class="card-cat">${p.category}</span>
-          <a href="/deal.html?id=${p.id}" class="card-name">${p.name}</a>
+          <span class="card-cat">${escapeHtml(p.category)}</span>
+          <a href="/deal.html?id=${p.id}" class="card-name">${safeName}</a>
           <div class="price-row">
             ${p.originalPrice ? `<span class="price-was">${money(p.originalPrice)}</span>` : ""}
             <span class="card-price">${money(p.price)}</span>
@@ -189,22 +191,23 @@ function renderDealOfDay() {
   const highlightsHtml = (todayP.highlights || []).slice(0, 4).map((h) => `
     <li>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-      ${h}
+      ${escapeHtml(h)}
     </li>`).join("");
 
+  const safeTodayName = escapeHtml(todayP.name);
   row.innerHTML = `
     <article class="dotd-card dotd-featured">
       <a href="/deal.html?id=${todayP.id}" class="dotd-img">
         <span class="dotd-tag">Today Only</span>
-        <img src="${imgSrc(todayP)}" alt="${todayP.name}" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(todayP)}'">
+        <img src="${imgSrc(todayP)}" alt="${safeTodayName}" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(todayP)}'">
         <span class="dotd-verified-tag">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
           WapeWape Verified
         </span>
       </a>
       <div class="dotd-body">
-        <span class="card-cat">${todayP.category}</span>
-        <a href="/deal.html?id=${todayP.id}" class="dotd-name">${todayP.name}</a>
+        <span class="card-cat">${escapeHtml(todayP.category)}</span>
+        <a href="/deal.html?id=${todayP.id}" class="dotd-name">${safeTodayName}</a>
         ${highlightsHtml ? `<ul class="dotd-highlights">${highlightsHtml}</ul>` : ""}
         <div class="dotd-featured-actions">
           <a href="/deal.html?id=${todayP.id}" class="btn btn-primary">View Deal</a>
@@ -258,17 +261,20 @@ function renderTrending() {
     return;
   }
   section.hidden = false;
-  row.innerHTML = hot.map((p) => `
+  row.innerHTML = hot.map((p) => {
+    const safeName = escapeHtml(p.name);
+    return `
     <a class="trending-card" href="#shop" data-id="${p.id}">
       <div class="t-img">
-        <img src="${imgSrc(p)}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
+        <img src="${imgSrc(p)}" alt="${safeName}" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
       </div>
       <div class="t-body">
-        <span class="t-name">${p.name}</span>
+        <span class="t-name">${safeName}</span>
         <span class="t-price">${money(p.price)}</span>
       </div>
     </a>
-  `).join("");
+  `;
+  }).join("");
 }
 
 function renderCart() {
@@ -281,11 +287,12 @@ function renderCart() {
     el.innerHTML = entries.map(([id, qty]) => {
       const p = window.PRODUCTS.find((p) => p.id === id);
       if (!p) return "";
+      const safeName = escapeHtml(p.name);
       return `
         <div class="cart-item">
-          <img src="${imgSrc(p)}" alt="${p.name}" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
+          <img src="${imgSrc(p)}" alt="${safeName}" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
           <div class="cart-item-info">
-            <div class="cart-item-name">${p.name}</div>
+            <div class="cart-item-name">${safeName}</div>
             <div class="cart-item-price">${money(p.price)}</div>
           </div>
           <div class="qty-controls">

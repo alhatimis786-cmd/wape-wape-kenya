@@ -168,10 +168,10 @@ async function loadSellers() {
   empty.style.display = "none";
   body.innerHTML = data.map((s) => `
     <tr>
-      <td><strong>${s.business_name}</strong></td>
-      <td>${s.contact_person}</td>
-      <td>${s.phone}</td>
-      <td>${s.category || "—"}</td>
+      <td><strong>${escapeHtml(s.business_name)}</strong></td>
+      <td>${escapeHtml(s.contact_person)}</td>
+      <td>${escapeHtml(s.phone)}</td>
+      <td>${escapeHtml(s.category) || "—"}</td>
       <td>${statusPill(s.status)}</td>
       <td>${s.commission_rate}%</td>
       <td>
@@ -208,9 +208,9 @@ async function loadDeals() {
     const isFeatured = d.featured_date === todayStr;
     return `
     <tr>
-      <td><strong>${d.title}</strong><br><span style="color:var(--text-muted); font-size:0.8rem;">${(d.description || "").slice(0, 80)}</span></td>
-      <td>${d.sellers ? d.sellers.business_name : "—"}</td>
-      <td>${d.category || "—"}</td>
+      <td><strong>${escapeHtml(d.title)}</strong><br><span style="color:var(--text-muted); font-size:0.8rem;">${escapeHtml((d.description || "").slice(0, 80))}</span></td>
+      <td>${d.sellers ? escapeHtml(d.sellers.business_name) : "—"}</td>
+      <td>${escapeHtml(d.category) || "—"}</td>
       <td>${d.price > 0 ? money(d.price) : "—"}${d.original_price ? `<br><span style="color:var(--text-muted); font-size:0.78rem; text-decoration:line-through;">${money(d.original_price)}</span>` : ""}</td>
       <td>${statusPill(d.status)}${isFeatured ? `<br><span class="status-pill status-live" style="margin-top:4px;">★ Today's Deal</span>` : ""}</td>
       <td>
@@ -304,10 +304,10 @@ async function loadOrders() {
   empty.style.display = "none";
   body.innerHTML = data.map((o) => `
     <tr>
-      <td><strong>${o.customer_name}</strong></td>
-      <td>${o.customer_phone}</td>
+      <td><strong>${escapeHtml(o.customer_name)}</strong></td>
+      <td>${escapeHtml(o.customer_phone)}</td>
       <td>
-        ${o.delivery_address}
+        ${escapeHtml(o.delivery_address)}
         ${o.delivery_lat && o.delivery_lng ? `<br><a href="https://www.google.com/maps?q=${o.delivery_lat},${o.delivery_lng}" target="_blank" rel="noopener" style="color:var(--accent); font-size:0.78rem; font-weight:600;">📍 View on map</a>` : ""}
       </td>
       <td>${money(o.total_amount)}</td>
@@ -325,9 +325,9 @@ async function loadFfm() {
   empty.style.display = "none";
   body.innerHTML = data.map((r) => `
     <tr>
-      <td><strong>${r.item_description}</strong></td>
-      <td>${r.customer_name || "—"}</td>
-      <td>${r.location || "—"}</td>
+      <td><strong>${escapeHtml(r.item_description)}</strong></td>
+      <td>${escapeHtml(r.customer_name) || "—"}</td>
+      <td>${escapeHtml(r.location) || "—"}</td>
       <td>${r.budget ? money(r.budget) : "—"}</td>
       <td>${statusPill(r.status)}</td>
       <td>${fmtDate(r.created_at)}</td>

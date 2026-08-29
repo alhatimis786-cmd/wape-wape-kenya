@@ -137,15 +137,16 @@ async function renderSellerPage() {
   document.getElementById("pageTitle").textContent = seller.business_name + " — Wape Wape Kenya";
   document.getElementById("pageDesc").content = "Shop everything from " + seller.business_name + " on Wape Wape Kenya.";
 
-  const initials = seller.business_name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  const safeBizName = escapeHtml(seller.business_name);
+  const initials = escapeHtml(seller.business_name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase());
 
   wrap.innerHTML = `
     <div class="seller-hero">
       <div class="seller-avatar">${initials}</div>
       <div>
-        <h1>${seller.business_name}</h1>
+        <h1>${safeBizName}</h1>
         <div class="seller-meta">
-          <span>${seller.category || "General"}</span>
+          <span>${escapeHtml(seller.category) || "General"}</span>
           <span>·</span>
           <span>${products.length} product${products.length === 1 ? "" : "s"}</span>
           <span class="verified-chip">
@@ -165,22 +166,23 @@ async function renderSellerPage() {
   grid.innerHTML = products.map((p) => {
     const outOfStock = p.inStock === false;
     const pct = (p.originalPrice && p.originalPrice > p.price) ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
+    const safeName = escapeHtml(p.name);
     return `
     <div class="card${outOfStock ? " out-of-stock" : ""}">
       <a href="/deal.html?id=${p.id}" class="card-img">
         ${pct > 0 ? `<div class="card-badges"><span class="badge badge-discount">-${pct}%</span></div>` : ""}
-        <img src="${imgSrc(p)}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/400x400/ECECF0/E0212B?text=${encodeURIComponent(p.name)}'">
+        <img src="${imgSrc(p)}" alt="${safeName}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/400x400/ECECF0/E0212B?text=${encodeURIComponent(p.name)}'">
       </a>
       <div class="card-body">
-        <span class="card-cat">${p.category}</span>
-        <a href="/deal.html?id=${p.id}" class="card-name">${p.name}</a>
+        <span class="card-cat">${escapeHtml(p.category)}</span>
+        <a href="/deal.html?id=${p.id}" class="card-name">${safeName}</a>
         <div class="price-row">
           ${p.originalPrice ? `<span class="price-was">${money(p.originalPrice)}</span>` : ""}
           <span class="card-price">${money(p.price)}</span>
         </div>
         <span class="stock-note">${outOfStock ? "Restocking soon" : "In stock"}</span>
         <div class="card-actions">
-          <button class="add-btn" data-id="${p.id}" aria-label="Add ${p.name} to cart"${outOfStock ? " disabled" : ""}>+</button>
+          <button class="add-btn" data-id="${p.id}" aria-label="Add ${safeName} to cart"${outOfStock ? " disabled" : ""}>+</button>
         </div>
       </div>
     </div>`;

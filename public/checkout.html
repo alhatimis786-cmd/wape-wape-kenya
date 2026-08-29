@@ -123,11 +123,12 @@
     const itemsHtml = entries.map(([id, qty]) => {
       const p = window.PRODUCTS.find((p) => p.id === id);
       if (!p) return "";
+      const safeName = escapeHtml(p.name);
       return `
         <div class="co-item">
-          <img src="${imgSrc(p)}" alt="${p.name}" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
+          <img src="${imgSrc(p)}" alt="${safeName}" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
           <div class="co-item-info">
-            <div class="co-item-name">${p.name}</div>
+            <div class="co-item-name">${safeName}</div>
             <div class="co-item-qty">Qty ${qty}</div>
           </div>
           <div class="co-item-price">${money(p.price * qty)}</div>
