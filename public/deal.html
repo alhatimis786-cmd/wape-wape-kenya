@@ -227,7 +227,7 @@ function renderDeal() {
         <button class="deal-like-btn${isLiked(product.id) ? " liked" : ""}" id="dealLikeBtn" aria-label="Save this deal">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-6.7-4.35-9.33-8.2C1.02 10.28 1.6 6.9 4.36 5.3c2.3-1.33 5.02-.62 6.64 1.44C12.62 4.68 15.34 3.97 17.64 5.3c2.76 1.6 3.34 4.98 1.69 7.5C18.7 16.65 12 21 12 21z"/></svg>
         </button>
-        <img src="/images/${product.image}" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/600x600/ECECF0/E0212B?text=${encodeURIComponent(product.name)}'">
+        <img src="${imgSrc(product)}" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/600x600/ECECF0/E0212B?text=${encodeURIComponent(product.name)}'">
       </div>
       <div class="deal-info">
         <span class="deal-category">${product.category}</span>
@@ -362,7 +362,7 @@ function renderRelated() {
   document.getElementById("relatedSection").hidden = false;
   document.getElementById("relatedRow").innerHTML = related.map((p) => `
     <a class="trending-card" href="/deal.html?id=${p.id}">
-      <div class="t-img"><img src="/images/${p.image}" alt="${p.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x400/ECECF0/E0212B?text=${encodeURIComponent(p.name)}'"></div>
+      <div class="t-img"><img src="${imgSrc(p)}" alt="${p.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x400/ECECF0/E0212B?text=${encodeURIComponent(p.name)}'"></div>
       <div class="t-body">
         <span class="t-name">${p.name}</span>
         <span class="t-price">${money(p.price)}</span>

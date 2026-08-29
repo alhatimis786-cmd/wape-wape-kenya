@@ -27,6 +27,7 @@ function cartTotal() {
 }
 
 function imgSrc(product) {
+  if (product.image && /^https?:\/\//i.test(product.image)) return product.image;
   return `/images/${product.image}`;
 }
 

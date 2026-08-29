@@ -85,11 +85,14 @@
       <label>Description
         <textarea id="dealDescription" placeholder="What is it, what's included, anything customers should know"></textarea>
       </label>
-      <label>Photo filename (optional)
-        <input type="text" id="dealImage" placeholder="e.g. my-product.jpg">
-        <span class="field-hint">Send the actual photo to WapeWape on WhatsApp — this field just tells us what to name the file.</span>
+      <label>Product photo
+        <input type="file" id="dealImage" accept="image/*">
+        <span class="field-hint">JPG or PNG, uploaded directly — no need to send it separately.</span>
       </label>
-      <button type="submit" class="btn btn-primary">Submit for Review</button>
+      <div id="imagePreviewWrap" style="display:none;">
+        <img id="imagePreview" style="width:100px; height:100px; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
+      </div>
+      <button type="submit" class="btn btn-primary" id="submitDealBtn">Submit for Review</button>
       <p id="newDealMsg" class="field-hint" style="text-align:center;"></p>
     </form>
   </div>
@@ -151,9 +154,23 @@ async function initDashboard() {
 
   loadDeals();
 
+  document.getElementById("dealImage").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    const previewWrap = document.getElementById("imagePreviewWrap");
+    if (!file) { previewWrap.style.display = "none"; return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      document.getElementById("imagePreview").src = ev.target.result;
+      previewWrap.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  });
+
   document.getElementById("newDealForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const msg = document.getElementById("newDealMsg");
+    const submitBtn = document.getElementById("submitDealBtn");
+    submitBtn.disabled = true;
     msg.textContent = "Submitting…";
     msg.style.color = "var(--text-muted)";
 
@@ -161,17 +178,36 @@ async function initDashboard() {
     const category = document.getElementById("dealCategory").value;
     const price = Number(document.getElementById("dealPrice").value);
     const description = document.getElementById("dealDescription").value.trim();
-    const image = document.getElementById("dealImage").value.trim();
+    const imageFile = document.getElementById("dealImage").files[0];
 
+    let imageUrl = null;
+    if (imageFile) {
+      msg.textContent = "Uploading photo…";
+      const ext = (imageFile.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${sellerRow.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: uploadError } = await sb.storage.from("product-images").upload(path, imageFile);
+      if (uploadError) {
+        msg.textContent = "Photo upload failed: " + uploadError.message;
+        msg.style.color = "var(--accent)";
+        submitBtn.disabled = false;
+        return;
+      }
+      const { data: urlData } = sb.storage.from("product-images").getPublicUrl(path);
+      imageUrl = urlData.publicUrl;
+    }
+
+    msg.textContent = "Submitting…";
     const { error } = await sb.from("deals").insert({
       seller_id: sellerRow.id,
       title,
       category,
       price,
       description,
-      image_url: image || null,
+      image_url: imageUrl,
       status: "pending"
     });
+
+    submitBtn.disabled = false;
 
     if (error) {
       msg.textContent = error.message;
@@ -182,6 +218,7 @@ async function initDashboard() {
     msg.textContent = "Submitted — pending WapeWape's review.";
     msg.style.color = "var(--accent-green)";
     document.getElementById("newDealForm").reset();
+    document.getElementById("imagePreviewWrap").style.display = "none";
     loadDeals();
   });
 }
