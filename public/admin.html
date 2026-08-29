@@ -97,7 +97,7 @@
 
   <div class="admin-panel" id="panel-orders">
     <table class="admin-table">
-      <thead><tr><th>Customer</th><th>Phone</th><th>Total</th><th>Payment</th><th>Delivery</th><th>Date</th></tr></thead>
+      <thead><tr><th>Customer</th><th>Phone</th><th>Address</th><th>Total</th><th>Payment</th><th>Delivery</th><th>Date</th></tr></thead>
       <tbody id="ordersBody"></tbody>
     </table>
     <div class="admin-empty" id="ordersEmpty" style="display:none;">No orders yet.</div>
@@ -306,6 +306,10 @@ async function loadOrders() {
     <tr>
       <td><strong>${o.customer_name}</strong></td>
       <td>${o.customer_phone}</td>
+      <td>
+        ${o.delivery_address}
+        ${o.delivery_lat && o.delivery_lng ? `<br><a href="https://www.google.com/maps?q=${o.delivery_lat},${o.delivery_lng}" target="_blank" rel="noopener" style="color:var(--accent); font-size:0.78rem; font-weight:600;">📍 View on map</a>` : ""}
+      </td>
       <td>${money(o.total_amount)}</td>
       <td>${statusPill(o.payment_status)}</td>
       <td>${statusPill(o.delivery_status)}</td>

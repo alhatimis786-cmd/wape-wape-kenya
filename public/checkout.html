@@ -140,6 +140,12 @@
           <label>Full name<input type="text" id="custName" required></label>
           <label>Phone number<input type="tel" id="custPhone" required></label>
           <label>Delivery area / address<input type="text" id="custAddress" required></label>
+          <div>
+            <button type="button" class="btn btn-ghost" id="shareLocationBtn" style="font-size:0.85rem; padding:10px 18px;">
+              📍 Share My Location <span style="color:var(--text-muted); font-weight:400;">(optional, helps your rider find you)</span>
+            </button>
+            <p id="locationStatus" class="field-hint" style="margin-top:8px;"></p>
+          </div>
           <fieldset class="pay-methods">
             <legend>Pay with</legend>
             <label class="pay-option"><input type="radio" name="payMethod" value="M-Pesa" checked>M-Pesa</label>
@@ -155,6 +161,35 @@
           <div class="co-total"><span>Total</span><span>${money(cartTotal())}</span></div>
         </div>
       </div>`;
+
+    let capturedLat = null;
+    let capturedLng = null;
+
+    document.getElementById("shareLocationBtn").addEventListener("click", () => {
+      const statusEl = document.getElementById("locationStatus");
+      if (!navigator.geolocation) {
+        statusEl.textContent = "Location sharing isn't supported on this browser.";
+        statusEl.style.color = "var(--text-muted)";
+        return;
+      }
+      statusEl.textContent = "Getting your location…";
+      statusEl.style.color = "var(--text-muted)";
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          capturedLat = pos.coords.latitude;
+          capturedLng = pos.coords.longitude;
+          statusEl.textContent = "✓ Location shared — your rider will get a map link.";
+          statusEl.style.color = "var(--accent-green)";
+        },
+        (err) => {
+          capturedLat = null;
+          capturedLng = null;
+          statusEl.textContent = "Couldn't get your location — no problem, just make sure your address above is clear.";
+          statusEl.style.color = "var(--text-muted)";
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
 
     document.getElementById("checkoutForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -179,6 +214,8 @@
         customer_name: name,
         customer_phone: phone,
         delivery_address: address,
+        delivery_lat: capturedLat,
+        delivery_lng: capturedLng,
         items: items,
         total_amount: cartTotal(),
         payment_method: payMethod,
@@ -190,7 +227,10 @@
         console.error("Order save failed:", error.message);
       }
 
-      const msg = encodeURIComponent(buildOrderMessage(name, phone, address, payMethod));
+      const mapLine = (capturedLat && capturedLng)
+        ? `\nLocation: https://www.google.com/maps?q=${capturedLat},${capturedLng}`
+        : "";
+      const msg = encodeURIComponent(buildOrderMessage(name, phone, address, payMethod) + mapLine);
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, "_blank");
 
       submitBtn.disabled = false;
