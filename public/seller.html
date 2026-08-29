@@ -112,7 +112,7 @@ async function renderSellerPage() {
 
   const { data: deals, error: dealsError } = await sb
     .from("deals")
-    .select("id, title, description, category, price, original_price, image_url, hot, in_stock, stock_count, highlights")
+    .select("id, title, description, category, price, original_price, image_url, image_urls, hot, in_stock, stock_count, highlights")
     .eq("seller_id", sellerId)
     .eq("status", "live")
     .order("submitted_at", { ascending: false });

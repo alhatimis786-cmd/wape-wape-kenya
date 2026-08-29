@@ -12,7 +12,7 @@ window.DAILY_DEALS = { today: null };
 window.catalogReady = (async function loadCatalog() {
   const { data, error } = await sb
     .from("deals")
-    .select("id, seller_id, title, description, category, price, original_price, image_url, status, hot, in_stock, stock_count, highlights, featured_date, submitted_at")
+    .select("id, seller_id, title, description, category, price, original_price, image_url, image_urls, status, hot, in_stock, stock_count, highlights, featured_date, submitted_at")
     .eq("status", "live")
     .order("submitted_at", { ascending: false });
 
@@ -35,6 +35,7 @@ window.catalogReady = (async function loadCatalog() {
 
   window.PRODUCTS = (data || []).map((d) => {
     if (d.featured_date === todayStr) todayId = d.id;
+    const gallery = Array.isArray(d.image_urls) && d.image_urls.length ? d.image_urls : (d.image_url ? [d.image_url] : []);
     return {
       id: d.id,
       name: d.title,
@@ -47,6 +48,7 @@ window.catalogReady = (async function loadCatalog() {
       highlights: Array.isArray(d.highlights) ? d.highlights : [],
       dateAdded: d.submitted_at,
       image: d.image_url,
+      images: gallery,
       sellerId: d.seller_id,
       sellerName: sellerMap[d.seller_id] || null
     };

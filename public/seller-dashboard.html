@@ -85,12 +85,13 @@
       <label>Description
         <textarea id="dealDescription" placeholder="What is it, what's included, anything customers should know"></textarea>
       </label>
-      <label>Product photo
-        <input type="file" id="dealImage" accept="image/*">
-        <span class="field-hint">JPG or PNG, uploaded directly — no need to send it separately.</span>
+      <label>Product photos (up to 5)
+        <input type="file" id="dealImage" accept="image/*" multiple>
+        <span class="field-hint">JPG or PNG, uploaded directly — customers can scroll through all of them on your product page.</span>
       </label>
       <div id="imagePreviewWrap" style="display:none;">
-        <img id="imagePreview" style="width:100px; height:100px; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
+        <div id="imagePreviewGrid" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+        <p id="imageCountMsg" class="field-hint" style="margin-top:6px;"></p>
       </div>
       <button type="submit" class="btn btn-primary" id="submitDealBtn">Submit for Review</button>
       <p id="newDealMsg" class="field-hint" style="text-align:center;"></p>
@@ -155,15 +156,33 @@ async function initDashboard() {
   loadDeals();
 
   document.getElementById("dealImage").addEventListener("change", (e) => {
-    const file = e.target.files[0];
+    const files = Array.from(e.target.files).slice(0, 5);
     const previewWrap = document.getElementById("imagePreviewWrap");
-    if (!file) { previewWrap.style.display = "none"; return; }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      document.getElementById("imagePreview").src = ev.target.result;
-      previewWrap.style.display = "block";
-    };
-    reader.readAsDataURL(file);
+    const grid = document.getElementById("imagePreviewGrid");
+    const countMsg = document.getElementById("imageCountMsg");
+
+    if (e.target.files.length > 5) {
+      countMsg.textContent = "Only the first 5 photos will be used.";
+      countMsg.style.color = "var(--accent)";
+    } else {
+      countMsg.textContent = `${files.length} photo${files.length === 1 ? "" : "s"} selected.`;
+      countMsg.style.color = "var(--text-muted)";
+    }
+
+    if (!files.length) { previewWrap.style.display = "none"; grid.innerHTML = ""; return; }
+
+    grid.innerHTML = "";
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = document.createElement("img");
+        img.src = ev.target.result;
+        img.style.cssText = "width:80px; height:80px; object-fit:cover; border-radius:8px; border:1px solid var(--border);";
+        grid.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+    previewWrap.style.display = "block";
   });
 
   document.getElementById("newDealForm").addEventListener("submit", async (e) => {
@@ -178,22 +197,25 @@ async function initDashboard() {
     const category = document.getElementById("dealCategory").value;
     const price = Number(document.getElementById("dealPrice").value);
     const description = document.getElementById("dealDescription").value.trim();
-    const imageFile = document.getElementById("dealImage").files[0];
+    const imageFiles = Array.from(document.getElementById("dealImage").files).slice(0, 5);
 
-    let imageUrl = null;
-    if (imageFile) {
-      msg.textContent = "Uploading photo…";
-      const ext = (imageFile.name.split(".").pop() || "jpg").toLowerCase();
-      const path = `${sellerRow.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error: uploadError } = await sb.storage.from("product-images").upload(path, imageFile);
-      if (uploadError) {
-        msg.textContent = "Photo upload failed: " + uploadError.message;
-        msg.style.color = "var(--accent)";
-        submitBtn.disabled = false;
-        return;
+    const uploadedUrls = [];
+    if (imageFiles.length) {
+      for (let i = 0; i < imageFiles.length; i++) {
+        msg.textContent = `Uploading photo ${i + 1} of ${imageFiles.length}…`;
+        const file = imageFiles[i];
+        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+        const path = `${sellerRow.id}/${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: uploadError } = await sb.storage.from("product-images").upload(path, file);
+        if (uploadError) {
+          msg.textContent = `Photo ${i + 1} failed: ` + uploadError.message;
+          msg.style.color = "var(--accent)";
+          submitBtn.disabled = false;
+          return;
+        }
+        const { data: urlData } = sb.storage.from("product-images").getPublicUrl(path);
+        uploadedUrls.push(urlData.publicUrl);
       }
-      const { data: urlData } = sb.storage.from("product-images").getPublicUrl(path);
-      imageUrl = urlData.publicUrl;
     }
 
     msg.textContent = "Submitting…";
@@ -203,7 +225,8 @@ async function initDashboard() {
       category,
       price,
       description,
-      image_url: imageUrl,
+      image_url: uploadedUrls[0] || null,
+      image_urls: uploadedUrls,
       status: "pending"
     });
 

@@ -17,11 +17,21 @@
   .deal-detail { max-width: 1100px; margin: 0 auto; padding: 32px 24px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
   @media (max-width: 800px) { .deal-detail { grid-template-columns: 1fr; gap: 24px; } }
   .deal-gallery { position: relative; }
-  .deal-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 16px; background: var(--bg-elevated); border: 1px solid var(--border); }
-  .deal-gallery-badges { position: absolute; top: 14px; left: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .deal-gallery-scroll {
+    display: flex; overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 16px;
+    aspect-ratio: 1; background: var(--bg-elevated); border: 1px solid var(--border);
+    -ms-overflow-style: none; scrollbar-width: none;
+  }
+  .deal-gallery-scroll::-webkit-scrollbar { display: none; }
+  .deal-gallery-scroll img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
+  .deal-gallery-dots { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 2; }
+  .deal-gallery-dots .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.55); transition: background 0.15s, transform 0.15s; }
+  .deal-gallery-dots .dot.active { background: #fff; transform: scale(1.3); }
+  .deal-gallery-badges { position: absolute; top: 14px; left: 14px; display: flex; flex-direction: column; gap: 8px; z-index: 2; }
   .deal-like-btn {
     position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border-radius: 50%;
     background: #fff; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted);
+    z-index: 2;
   }
   .deal-like-btn.liked { color: var(--accent); border-color: var(--accent); }
   .deal-like-btn.liked svg { fill: currentColor; }
@@ -227,7 +237,15 @@ function renderDeal() {
         <button class="deal-like-btn${isLiked(product.id) ? " liked" : ""}" id="dealLikeBtn" aria-label="Save this deal">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-6.7-4.35-9.33-8.2C1.02 10.28 1.6 6.9 4.36 5.3c2.3-1.33 5.02-.62 6.64 1.44C12.62 4.68 15.34 3.97 17.64 5.3c2.76 1.6 3.34 4.98 1.69 7.5C18.7 16.65 12 21 12 21z"/></svg>
         </button>
-        <img src="${imgSrc(product)}" alt="${escapeHtml(product.name)}" onerror="this.onerror=null;this.src='https://placehold.co/600x600/ECECF0/E0212B?text=${encodeURIComponent(product.name)}'">
+        <div class="deal-gallery-scroll" id="dealGalleryScroll">
+          ${(product.images && product.images.length ? product.images : [null]).map((url) => `
+            <img src="${url ? url : imgSrc(product)}" alt="${escapeHtml(product.name)}" onerror="this.onerror=null;this.src='https://placehold.co/600x600/ECECF0/E0212B?text=${encodeURIComponent(product.name)}'">
+          `).join("")}
+        </div>
+        ${product.images && product.images.length > 1 ? `
+          <div class="deal-gallery-dots" id="dealGalleryDots">
+            ${product.images.map((_, i) => `<span class="dot${i === 0 ? " active" : ""}"></span>`).join("")}
+          </div>` : ""}
       </div>
       <div class="deal-info">
         <span class="deal-category">${escapeHtml(product.category)}</span>
@@ -318,6 +336,15 @@ function renderDeal() {
   `;
 
   document.getElementById("dealLikeBtn").addEventListener("click", (e) => toggleLike(product.id, e.currentTarget));
+
+  const galleryScroll = document.getElementById("dealGalleryScroll");
+  const galleryDots = document.getElementById("dealGalleryDots");
+  if (galleryScroll && galleryDots) {
+    galleryScroll.addEventListener("scroll", () => {
+      const index = Math.round(galleryScroll.scrollLeft / galleryScroll.clientWidth);
+      galleryDots.querySelectorAll(".dot").forEach((dot, i) => dot.classList.toggle("active", i === index));
+    });
+  }
   document.getElementById("addToCartBtn").addEventListener("click", () => { addToCart(product.id); updateCartCount(); });
   document.getElementById("buyNowBtn").addEventListener("click", () => { addToCart(product.id); window.location.href = "/checkout.html"; });
 
