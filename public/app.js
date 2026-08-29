@@ -1,7 +1,8 @@
 const state = {
   category: "All",
   search: "",
-  sort: "featured"
+  sort: "featured",
+  dealType: null
 };
 
 function discountPct(p) {
@@ -64,6 +65,10 @@ function getVisibleProducts() {
   let items = state.category === "All"
     ? window.PRODUCTS
     : window.PRODUCTS.filter((p) => p.category === state.category);
+
+  if (state.dealType) {
+    items = items.filter((p) => p.dealType === state.dealType);
+  }
 
   if (state.search.trim()) {
     const q = state.search.trim().toLowerCase();
@@ -143,7 +148,12 @@ function renderGrid() {
   const noResults = document.getElementById("noResults");
   const resultCount = document.getElementById("resultCount");
 
-  resultCount.textContent = `${items.length} deal${items.length === 1 ? "" : "s"}${state.category !== "All" ? " in " + state.category : ""}${state.search ? ` matching "${state.search}"` : ""}`;
+  const DEAL_TYPE_NAMES = {
+    deal_of_week: "Deal of the Week", deal_of_month: "Deal of the Month", flash_deal: "Flash Deals",
+    crazy_deal: "Crazy Deals", clearance_sale: "Clearance Sale", bulk_deal: "Bulk Deals"
+  };
+  const dealTypeLabel = state.dealType ? DEAL_TYPE_NAMES[state.dealType] : "";
+  resultCount.textContent = `${items.length} deal${items.length === 1 ? "" : "s"}${dealTypeLabel ? " — " + dealTypeLabel : ""}${state.category !== "All" ? " in " + state.category : ""}${state.search ? ` matching "${state.search}"` : ""}`;
 
   if (items.length === 0) {
     grid.innerHTML = "";
@@ -339,15 +349,19 @@ function closeCart() {
 
 let searchDebounce;
 
+const VALID_DEAL_TYPES = new Set(["deal_of_week", "deal_of_month", "flash_deal", "crazy_deal", "clearance_sale", "bulk_deal"]);
+
 function applyUrlParams() {
   const params = new URLSearchParams(window.location.search);
   const cat = params.get("cat");
   const sort = params.get("sort");
   const q = params.get("q");
+  const dealType = params.get("dealType");
   const validCats = new Set(window.PRODUCTS.map((p) => p.category));
   if (cat && validCats.has(cat)) state.category = cat;
   if (sort) state.sort = sort;
   if (q) state.search = q;
+  if (dealType && VALID_DEAL_TYPES.has(dealType)) state.dealType = dealType;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {

@@ -51,6 +51,7 @@
     border: 1px solid var(--border); background: var(--bg); color: var(--text-muted);
   }
   .kra-toggle-btn.verified { background: #E6F6EC; color: #178A46; border-color: #178A46; }
+  .deal-type-select { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); font-size: 0.8rem; color: var(--text); }
   .admin-gate { max-width: 480px; margin: 80px auto; text-align: center; padding: 0 24px; }
   .admin-gate p { color: var(--text-muted); margin: 12px 0 20px; }
 </style>
@@ -95,7 +96,7 @@
 
   <div class="admin-panel" id="panel-deals">
     <table class="admin-table">
-      <thead><tr><th>Deal</th><th>Seller</th><th>Category</th><th>Price</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>Deal</th><th>Seller</th><th>Category</th><th>Deal Type</th><th>Price</th><th>Status</th><th></th></tr></thead>
       <tbody id="dealsBody"></tbody>
     </table>
     <div class="admin-empty" id="dealsEmpty" style="display:none;">No deals submitted yet.</div>
@@ -133,6 +134,10 @@
 const money = (n) => "KES " + Number(n || 0).toLocaleString("en-KE");
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : "—";
 const statusPill = (s) => `<span class="status-pill status-${s}">${s.replace(/_/g, " ")}</span>`;
+const DEAL_TYPE_OPTIONS = [
+  ["regular", "Regular listing"], ["deal_of_week", "Deal of the Week"], ["deal_of_month", "Deal of the Month"],
+  ["flash_deal", "Flash Deal"], ["crazy_deal", "Crazy Deal"], ["clearance_sale", "Clearance Sale"], ["bulk_deal", "Bulk Deal"]
+];
 
 async function initAdmin() {
   const session = await wwkGetSession();
@@ -243,6 +248,11 @@ async function loadDeals() {
       <td><strong>${escapeHtml(d.title)}</strong><br><span style="color:var(--text-muted); font-size:0.8rem;">${escapeHtml((d.description || "").slice(0, 80))}</span></td>
       <td>${d.sellers ? escapeHtml(d.sellers.business_name) : "—"}</td>
       <td>${escapeHtml(d.category) || "—"}</td>
+      <td>
+        <select class="deal-type-select" data-deal-type-id="${d.id}">
+          ${DEAL_TYPE_OPTIONS.map(([val, label]) => `<option value="${val}"${d.deal_type === val ? " selected" : ""}>${label}</option>`).join("")}
+        </select>
+      </td>
       <td>${d.price > 0 ? money(d.price) : "—"}${d.original_price ? `<br><span style="color:var(--text-muted); font-size:0.78rem; text-decoration:line-through;">${money(d.original_price)}</span>` : ""}</td>
       <td>${statusPill(d.status)}${isFeatured ? `<br><span class="status-pill status-live" style="margin-top:4px;">★ Today's Deal</span>` : ""}</td>
       <td>
@@ -288,6 +298,14 @@ async function loadDeals() {
       btn.disabled = true;
       await sb.from("deals").update({ price: priceNum }).eq("id", dealId);
       loadDeals();
+    });
+  });
+
+  body.querySelectorAll(".deal-type-select").forEach((select) => {
+    select.addEventListener("change", async () => {
+      select.disabled = true;
+      await sb.from("deals").update({ deal_type: select.value }).eq("id", select.dataset.dealTypeId);
+      select.disabled = false;
     });
   });
 

@@ -12,7 +12,7 @@ window.DAILY_DEALS = { today: null };
 window.catalogReady = (async function loadCatalog() {
   const { data, error } = await sb
     .from("deals")
-    .select("id, seller_id, title, description, category, price, original_price, image_url, image_urls, status, hot, in_stock, stock_count, highlights, featured_date, submitted_at")
+    .select("id, seller_id, title, description, category, deal_type, price, original_price, image_url, image_urls, status, hot, in_stock, stock_count, highlights, featured_date, submitted_at")
     .eq("status", "live")
     .order("submitted_at", { ascending: false });
 
@@ -49,6 +49,7 @@ window.catalogReady = (async function loadCatalog() {
       dateAdded: d.submitted_at,
       image: d.image_url,
       images: gallery,
+      dealType: d.deal_type || "regular",
       sellerId: d.seller_id,
       sellerName: sellerMap[d.seller_id] || null
     };
