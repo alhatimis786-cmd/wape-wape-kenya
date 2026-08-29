@@ -119,13 +119,17 @@
   <label>Business / seller name
     <input type="text" id="sellBusiness" required>
   </label>
-  <label>Contact person
-    <input type="text" id="sellContact" required>
+  <label>Email
+    <input type="email" id="sellEmail" required>
+  </label>
+  <label>KRA PIN
+    <input type="text" id="sellKraPin" placeholder="e.g. A012345678Z" required>
+    <span class="field-hint">Used to verify your business before approval.</span>
   </label>
   <label>Phone / WhatsApp number
     <input type="tel" id="sellPhone" required>
   </label>
-  <label>Product category
+  <label>Category of interest
     <select id="sellCategory">
       <option>Electronics</option>
       <option>Home & Kitchen</option>
@@ -136,9 +140,6 @@
       <option>Other</option>
     </select>
   </label>
-  <label>Tell us about your deal
-    <textarea id="sellMessage" placeholder="What's the product, how much stock, and what price are you thinking?" required></textarea>
-  </label>
   <button type="submit" class="btn btn-primary">Submit Seller Registration</button>
   <p id="sellMsg" class="field-hint" style="text-align:center;"></p>
 </form>
@@ -146,7 +147,7 @@
 <div class="form-success" id="sellSuccess">
   <div class="check">✅</div>
   <h3>Registration submitted</h3>
-  <p>Your seller application is saved and pending review — our team checks it against current market prices before approving. We'll be in touch.</p>
+  <p>Your seller application is saved and pending review. Once approved, use your dashboard to submit products.</p>
   <a href="/seller-dashboard.html" class="btn btn-primary" style="margin-top:16px;">Go to Your Dashboard</a>
 </div>
 </div>
@@ -197,27 +198,27 @@ async function initSellPage() {
     msg.style.color = "var(--text-muted)";
 
     const biz = document.getElementById("sellBusiness").value.trim();
-    const contact = document.getElementById("sellContact").value.trim();
+    const email = document.getElementById("sellEmail").value.trim();
+    const kraPin = document.getElementById("sellKraPin").value.trim();
     const phone = document.getElementById("sellPhone").value.trim();
     const category = document.getElementById("sellCategory").value;
-    const message = document.getElementById("sellMessage").value.trim();
 
     // Create (or reuse) this user's seller record, pending review.
-    const { data: sellerRow, error: sellerError } = await sb
+    const { error: sellerError } = await sb
       .from("sellers")
       .upsert(
         {
           profile_id: session.user.id,
           business_name: biz,
-          contact_person: contact,
+          email: email,
+          kra_pin: kraPin,
+          contact_person: biz,
           phone: phone,
           category: category,
           status: "pending"
         },
         { onConflict: "profile_id" }
-      )
-      .select()
-      .single();
+      );
 
     if (sellerError) {
       msg.textContent = sellerError.message;
@@ -230,18 +231,6 @@ async function initSellPage() {
     const { data: currentProfile } = await sb.from("profiles").select("role").eq("id", session.user.id).single();
     if (currentProfile && currentProfile.role === "shopper") {
       await sb.from("profiles").update({ role: "seller" }).eq("id", session.user.id);
-    }
-
-    // Log the pitch as their first deal submission note (kept simple for now).
-    if (sellerRow && message) {
-      await sb.from("deals").insert({
-        seller_id: sellerRow.id,
-        title: biz + " — initial submission",
-        description: message,
-        category: category,
-        price: 0,
-        status: "pending"
-      });
     }
 
     document.getElementById("sellForm").style.display = "none";

@@ -46,6 +46,11 @@
   .row-btn.reject { background: var(--bg); color: var(--accent); border-color: var(--accent); }
   .row-btn.feature { background: var(--text); color: #fff; border-color: var(--text); }
   .row-btn.edit { background: var(--bg); color: var(--text-muted); border-color: var(--border); }
+  .kra-toggle-btn {
+    margin-top: 4px; padding: 4px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text-muted);
+  }
+  .kra-toggle-btn.verified { background: #E6F6EC; color: #178A46; border-color: #178A46; }
   .admin-gate { max-width: 480px; margin: 80px auto; text-align: center; padding: 0 24px; }
   .admin-gate p { color: var(--text-muted); margin: 12px 0 20px; }
 </style>
@@ -77,11 +82,12 @@
     <button class="admin-tab" data-tab="deals">Deals</button>
     <button class="admin-tab" data-tab="orders">Orders</button>
     <button class="admin-tab" data-tab="ffm">Find It For Me</button>
+    <button class="admin-tab" data-tab="pending-signups">Pending Signups</button>
   </div>
 
   <div class="admin-panel active" id="panel-sellers">
     <table class="admin-table">
-      <thead><tr><th>Business</th><th>Contact</th><th>Phone</th><th>Category</th><th>Status</th><th>Commission</th><th></th></tr></thead>
+      <thead><tr><th>Business</th><th>Email</th><th>Phone</th><th>Category</th><th>KRA PIN</th><th>Status</th><th>Commission</th><th></th></tr></thead>
       <tbody id="sellersBody"></tbody>
     </table>
     <div class="admin-empty" id="sellersEmpty" style="display:none;">No sellers yet.</div>
@@ -109,6 +115,15 @@
       <tbody id="ffmBody"></tbody>
     </table>
     <div class="admin-empty" id="ffmEmpty" style="display:none;">No requests yet.</div>
+  </div>
+
+  <div class="admin-panel" id="panel-pending-signups">
+    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:16px;">Accounts stuck at the email-confirmation step — usually because the confirmation email landed in spam or was never opened.</p>
+    <table class="admin-table">
+      <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Signed Up</th><th></th></tr></thead>
+      <tbody id="pendingSignupsBody"></tbody>
+    </table>
+    <div class="admin-empty" id="pendingSignupsEmpty" style="display:none;">No pending signups — everyone's confirmed.</div>
   </div>
 </div>
 
@@ -149,6 +164,7 @@ async function initAdmin() {
   loadDeals();
   loadOrders();
   loadFfm();
+  loadPendingSignups();
 
   document.querySelectorAll(".admin-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -169,9 +185,16 @@ async function loadSellers() {
   body.innerHTML = data.map((s) => `
     <tr>
       <td><strong>${escapeHtml(s.business_name)}</strong></td>
-      <td>${escapeHtml(s.contact_person)}</td>
+      <td>${escapeHtml(s.email) || "—"}</td>
       <td>${escapeHtml(s.phone)}</td>
       <td>${escapeHtml(s.category) || "—"}</td>
+      <td>
+        ${escapeHtml(s.kra_pin) || "—"}
+        <br>
+        <button class="kra-toggle-btn ${s.kra_verified ? "verified" : ""}" data-kra-id="${s.id}" data-current="${s.kra_verified}">
+          ${s.kra_verified ? "✅ KRA Verified" : "Mark KRA Verified"}
+        </button>
+      </td>
       <td>${statusPill(s.status)}</td>
       <td>${s.commission_rate}%</td>
       <td>
@@ -182,6 +205,15 @@ async function loadSellers() {
           </div>` : ""}
       </td>
     </tr>`).join("");
+
+  body.querySelectorAll("button[data-kra-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const newValue = btn.dataset.current !== "true";
+      btn.disabled = true;
+      await sb.from("sellers").update({ kra_verified: newValue }).eq("id", btn.dataset.kraId);
+      loadSellers();
+    });
+  });
 
   body.querySelectorAll("button[data-action]").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -332,6 +364,46 @@ async function loadFfm() {
       <td>${statusPill(r.status)}</td>
       <td>${fmtDate(r.created_at)}</td>
     </tr>`).join("");
+}
+
+async function loadPendingSignups() {
+  const { data, error } = await sb.rpc("admin_list_pending_signups");
+  const body = document.getElementById("pendingSignupsBody");
+  const empty = document.getElementById("pendingSignupsEmpty");
+  if (error || !data || data.length === 0) { empty.style.display = "block"; body.innerHTML = ""; return; }
+  empty.style.display = "none";
+  body.innerHTML = data.map((u) => `
+    <tr>
+      <td>${escapeHtml(u.full_name) || "—"}</td>
+      <td>${escapeHtml(u.email)}</td>
+      <td>${escapeHtml(u.phone) || "—"}</td>
+      <td>${fmtDate(u.created_at)}</td>
+      <td>
+        <div class="row-actions">
+          <button class="row-btn approve" data-confirm-id="${u.id}">Confirm Email</button>
+          <button class="row-btn edit" data-resend-email="${escapeHtml(u.email)}">Resend Email</button>
+        </div>
+      </td>
+    </tr>`).join("");
+
+  body.querySelectorAll("button[data-confirm-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      const { error } = await sb.rpc("admin_confirm_user_email", { target_user_id: btn.dataset.confirmId });
+      if (error) { alert("Couldn't confirm: " + error.message); btn.disabled = false; return; }
+      loadPendingSignups();
+    });
+  });
+
+  body.querySelectorAll("button[data-resend-email]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      const { error } = await sb.auth.resend({ type: "signup", email: btn.dataset.resendEmail });
+      btn.disabled = false;
+      btn.textContent = error ? "Failed — try again" : "✓ Sent";
+    });
+  });
 }
 
 initAdmin();
