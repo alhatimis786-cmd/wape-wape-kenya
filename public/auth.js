@@ -55,6 +55,9 @@ async function wwkRenderNavAccount() {
     let roleLink = "";
     if (profile && profile.role === "seller") {
       roleLink = `<a href="/seller-dashboard.html" class="nav-whatsapp">My Products</a>`;
+      // Already registered — the "Sell With WapeWape" invitation no longer
+      // applies to them, so hide it everywhere it appears on the page.
+      document.querySelectorAll(".sell-with-nav-link").forEach((a) => { a.style.display = "none"; });
     } else if (profile && profile.role === "admin") {
       roleLink = `<a href="/admin.html" class="nav-whatsapp">Admin</a>`;
     }

@@ -83,7 +83,7 @@
     <a href="/#dealOfDay">Deal of the Day</a>
     <a href="/how-it-works.html">How It Works</a>
     <a href="/find-it-for-me.html" class="find-it-link">Find It For Me</a>
-    <a href="/sell.html" class="active">Sell With WapeWape</a>
+    <a href="/sell.html" class="active sell-with-nav-link">Sell With WapeWape</a>
   </nav>
 </header>
 
@@ -99,6 +99,11 @@
     <a href="/signup.html?redirect=/sell.html" class="btn btn-primary">Create Account</a>
     <a href="/login.html?redirect=/sell.html" class="btn btn-ghost">Log In</a>
   </div>
+</div>
+
+<div id="alreadyRegistered" class="content-page" style="text-align:center; display:none;">
+  <p class="lede">You're already registered with WapeWape — head to your dashboard to manage your products.</p>
+  <a href="/seller-dashboard.html" class="btn btn-primary" style="margin-top:20px;">Go to Your Dashboard</a>
 </div>
 
 <div id="sellContent" style="display:none;">
@@ -164,7 +169,7 @@
   <nav class="footer-links" aria-label="Footer">
     <a href="/how-it-works.html">How It Works</a>
     <a href="/find-it-for-me.html">Find It For Me</a>
-    <a href="/sell.html">Sell With WapeWape</a>
+    <a href="/sell.html" class="sell-with-nav-link">Sell With WapeWape</a>
     <a href="/about.html">About Us</a>
     <a href="/support.html">Support</a>
     <a href="/policies.html">Policies</a>
@@ -189,6 +194,13 @@ async function initSellPage() {
     document.getElementById("authGate").style.display = "block";
     return;
   }
+
+  const { data: profile } = await wwkGetProfile(session.user.id);
+  if (profile && profile.role === "seller") {
+    document.getElementById("alreadyRegistered").style.display = "block";
+    return;
+  }
+
   document.getElementById("sellContent").style.display = "block";
 
   document.getElementById("sellForm").addEventListener("submit", async (e) => {
