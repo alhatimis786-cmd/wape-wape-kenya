@@ -12,7 +12,7 @@ window.DAILY_DEALS = { today: null };
 window.catalogReady = (async function loadCatalog() {
   const { data, error } = await sb
     .from("deals")
-    .select("*")
+    .select("id, seller_id, title, description, category, price, original_price, image_url, status, hot, in_stock, stock_count, highlights, featured_date, submitted_at")
     .eq("status", "live")
     .order("submitted_at", { ascending: false });
 

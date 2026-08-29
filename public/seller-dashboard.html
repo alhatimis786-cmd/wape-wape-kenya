@@ -224,7 +224,7 @@ async function initDashboard() {
 }
 
 async function loadDeals() {
-  const { data, error } = await sb.from("deals").select("*").eq("seller_id", sellerRow.id).order("submitted_at", { ascending: false });
+  const { data, error } = await sb.from("deals").select("id, title, category, price, original_price, image_url, status, hot, in_stock, stock_count, highlights, submitted_at").eq("seller_id", sellerRow.id).order("submitted_at", { ascending: false });
   const body = document.getElementById("dealsBody");
   const empty = document.getElementById("dealsEmpty");
   if (error || !data || data.length === 0) { empty.style.display = "block"; body.innerHTML = ""; return; }
