@@ -38,7 +38,14 @@ async function wwkRenderNavAccount() {
   if (session) {
     const { data: profile } = await wwkGetProfile(session.user.id);
     const name = (profile && profile.full_name) ? profile.full_name.split(" ")[0] : "Account";
+    let roleLink = "";
+    if (profile && profile.role === "seller") {
+      roleLink = `<a href="/seller-dashboard.html" class="nav-whatsapp">My Products</a>`;
+    } else if (profile && profile.role === "admin") {
+      roleLink = `<a href="/admin.html" class="nav-whatsapp">Admin</a>`;
+    }
     el.innerHTML = `
+      ${roleLink}
       <span class="nav-account-name">${name}</span>
       <button class="nav-whatsapp" id="navLogoutBtn" type="button">Log Out</button>
     `;

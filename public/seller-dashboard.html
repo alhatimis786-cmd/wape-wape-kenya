@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seller Dashboard — Wape Wape Kenya</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#E0212B">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<style>
+  .sd-wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; }
+  .sd-head { margin-bottom: 24px; }
+  .sd-head h1 { font-size: 1.5rem; margin-bottom: 6px; }
+  .sd-head .biz-name { color: var(--text-muted); }
+  .sd-section { border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 24px; background: var(--bg-elevated); }
+  .sd-section h2 { font-size: 1.05rem; margin-bottom: 16px; }
+  .sd-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .sd-table th { text-align: left; padding: 10px; border-bottom: 2px solid var(--border); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+  .sd-table td { padding: 10px; border-bottom: 1px solid var(--border); }
+  .sd-empty { color: var(--text-muted); padding: 30px 0; text-align: center; }
+  .price-locked { display: inline-flex; align-items: center; gap: 5px; color: var(--text-muted); font-size: 0.78rem; }
+  .status-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .status-pending { background: #FFF4E5; color: #9A6700; }
+  .status-live { background: #E6F6EC; color: #178A46; }
+  .status-rejected { background: #FDECEC; color: #C01B24; }
+  .seller-status-banner { padding: 12px 16px; border-radius: 10px; font-size: 0.88rem; margin-bottom: 20px; }
+  .seller-status-banner.pending { background: #FFF4E5; color: #9A6700; }
+  .seller-status-banner.approved { background: #E6F6EC; color: #178A46; }
+  .seller-status-banner.rejected { background: #FDECEC; color: #C01B24; }
+  .sd-gate { max-width: 480px; margin: 80px auto; text-align: center; padding: 0 24px; }
+  .sd-gate p { color: var(--text-muted); margin: 12px 0 20px; }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-row simple">
+    <a href="/" class="brand-block">
+      <img class="logo-mark" src="/images/brand/logo-mark.png" width="34" height="34" alt="WapeWape logo">
+      <span class="brand-text">
+        <span class="brand">Wape<span>Wape</span></span>
+        <span class="tagline">Seller Dashboard</span>
+      </span>
+    </a>
+    <span class="nav-account" id="navAccountArea"></span>
+  </div>
+</header>
+
+<div id="gateWrap"></div>
+
+<div class="sd-wrap" id="dashboardWrap" style="display:none;">
+  <div class="sd-head">
+    <h1 id="sdBizName">Your Dashboard</h1>
+    <span class="biz-name">Manage your own products — nobody else can see or touch this data.</span>
+  </div>
+
+  <div id="statusBanner"></div>
+
+  <div class="sd-section">
+    <h2>Submit a New Product</h2>
+    <form class="site-form" id="newDealForm" style="padding:0; max-width:none;">
+      <label>Product name
+        <input type="text" id="dealTitle" required>
+      </label>
+      <label>Category
+        <select id="dealCategory">
+          <option>Electronics</option>
+          <option>Home & Kitchen</option>
+          <option>Fashion</option>
+          <option>Appliances</option>
+          <option>Beauty & Health</option>
+          <option>Baby & Kids</option>
+          <option>Other</option>
+        </select>
+      </label>
+      <label>Price (KES) — your starting price
+        <input type="number" id="dealPrice" min="1" required>
+        <span class="field-hint">Once submitted, only WapeWape can change this price — see note below.</span>
+      </label>
+      <label>Description
+        <textarea id="dealDescription" placeholder="What is it, what's included, anything customers should know"></textarea>
+      </label>
+      <label>Photo filename (optional)
+        <input type="text" id="dealImage" placeholder="e.g. my-product.jpg">
+        <span class="field-hint">Send the actual photo to WapeWape on WhatsApp — this field just tells us what to name the file.</span>
+      </label>
+      <button type="submit" class="btn btn-primary">Submit for Review</button>
+      <p id="newDealMsg" class="field-hint" style="text-align:center;"></p>
+    </form>
+  </div>
+
+  <div class="sd-section">
+    <h2>Your Products</h2>
+    <table class="sd-table">
+      <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Status</th></tr></thead>
+      <tbody id="dealsBody"></tbody>
+    </table>
+    <div class="sd-empty" id="dealsEmpty" style="display:none;">You haven't submitted any products yet.</div>
+  </div>
+</div>
+
+<script src="/vendor/supabase.js"></script>
+<script src="/auth.js"></script>
+<script>
+const money = (n) => "KES " + Number(n || 0).toLocaleString("en-KE");
+const statusPill = (s) => `<span class="status-pill status-${s}">${s}</span>`;
+let sellerRow = null;
+
+async function initDashboard() {
+  const session = await wwkGetSession();
+  const gateWrap = document.getElementById("gateWrap");
+
+  if (!session) {
+    gateWrap.innerHTML = `
+      <div class="sd-gate">
+        <h2>Log in to see your dashboard</h2>
+        <p>This is where you'll manage your own products once you're logged in.</p>
+        <a href="/login.html?redirect=/seller-dashboard.html" class="btn btn-primary">Log In</a>
+      </div>`;
+    return;
+  }
+
+  const { data: seller } = await sb.from("sellers").select("*").eq("profile_id", session.user.id).single();
+  if (!seller) {
+    gateWrap.innerHTML = `
+      <div class="sd-gate">
+        <h2>No seller account yet</h2>
+        <p>You'll need to register as a seller first before you get a dashboard.</p>
+        <a href="/sell.html" class="btn btn-primary">Register as a Seller</a>
+      </div>`;
+    return;
+  }
+
+  sellerRow = seller;
+  document.getElementById("dashboardWrap").style.display = "block";
+  document.getElementById("sdBizName").textContent = seller.business_name;
+
+  const banner = document.getElementById("statusBanner");
+  if (seller.status === "pending") {
+    banner.innerHTML = `<div class="seller-status-banner pending">Your seller account is pending review — you can still submit products, but nothing goes live until WapeWape approves your account.</div>`;
+  } else if (seller.status === "rejected") {
+    banner.innerHTML = `<div class="seller-status-banner rejected">Your seller account was not approved. Contact WapeWape on WhatsApp if you have questions.</div>`;
+  } else if (seller.status === "approved") {
+    banner.innerHTML = `<div class="seller-status-banner approved">Your seller account is approved. New products you submit still go through WapeWape's review before going live.</div>`;
+  }
+
+  loadDeals();
+
+  document.getElementById("newDealForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("newDealMsg");
+    msg.textContent = "Submitting…";
+    msg.style.color = "var(--text-muted)";
+
+    const title = document.getElementById("dealTitle").value.trim();
+    const category = document.getElementById("dealCategory").value;
+    const price = Number(document.getElementById("dealPrice").value);
+    const description = document.getElementById("dealDescription").value.trim();
+    const image = document.getElementById("dealImage").value.trim();
+
+    const { error } = await sb.from("deals").insert({
+      seller_id: sellerRow.id,
+      title,
+      category,
+      price,
+      description,
+      image_url: image || null,
+      status: "pending"
+    });
+
+    if (error) {
+      msg.textContent = error.message;
+      msg.style.color = "var(--accent)";
+      return;
+    }
+
+    msg.textContent = "Submitted — pending WapeWape's review.";
+    msg.style.color = "var(--accent-green)";
+    document.getElementById("newDealForm").reset();
+    loadDeals();
+  });
+}
+
+async function loadDeals() {
+  const { data, error } = await sb.from("deals").select("*").eq("seller_id", sellerRow.id).order("submitted_at", { ascending: false });
+  const body = document.getElementById("dealsBody");
+  const empty = document.getElementById("dealsEmpty");
+  if (error || !data || data.length === 0) { empty.style.display = "block"; body.innerHTML = ""; return; }
+  empty.style.display = "none";
+  body.innerHTML = data.map((d) => `
+    <tr>
+      <td><strong>${d.title}</strong></td>
+      <td>${d.category || "—"}</td>
+      <td>${d.price > 0 ? money(d.price) : "—"} <span class="price-locked" title="Only WapeWape can change this once submitted">🔒</span></td>
+      <td>${statusPill(d.status)}</td>
+    </tr>`).join("");
+}
+
+initDashboard();
+</script>
+</body>
+</html>
