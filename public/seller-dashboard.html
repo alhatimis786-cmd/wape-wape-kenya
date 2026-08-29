@@ -75,8 +75,13 @@
           <option>Appliances</option>
           <option>Beauty & Health</option>
           <option>Baby & Kids</option>
-          <option>Other</option>
+          <option value="Other">Other (type your own)</option>
         </select>
+      </label>
+      <label id="customCategoryWrap" style="display:none;">
+        Your category name
+        <input type="text" id="dealCustomCategory" placeholder="e.g. Furniture">
+        <span class="field-hint">This becomes its own category on WapeWape once approved — customers will be able to browse it like any other.</span>
       </label>
       <label>Deal type
         <select id="dealType">
@@ -172,6 +177,10 @@ async function initDashboard() {
 
   loadDeals();
 
+  document.getElementById("dealCategory").addEventListener("change", (e) => {
+    document.getElementById("customCategoryWrap").style.display = e.target.value === "Other" ? "block" : "none";
+  });
+
   document.getElementById("dealImage").addEventListener("change", (e) => {
     const files = Array.from(e.target.files).slice(0, 5);
     const previewWrap = document.getElementById("imagePreviewWrap");
@@ -211,7 +220,15 @@ async function initDashboard() {
     msg.style.color = "var(--text-muted)";
 
     const title = document.getElementById("dealTitle").value.trim();
-    const category = document.getElementById("dealCategory").value;
+    const categorySelect = document.getElementById("dealCategory").value;
+    const customCategory = document.getElementById("dealCustomCategory").value.trim();
+    if (categorySelect === "Other" && !customCategory) {
+      msg.textContent = "Type your category name, or pick one of the listed categories instead.";
+      msg.style.color = "var(--accent)";
+      submitBtn.disabled = false;
+      return;
+    }
+    const category = categorySelect === "Other" && customCategory ? customCategory : categorySelect;
     const dealType = document.getElementById("dealType").value;
     const price = Number(document.getElementById("dealPrice").value);
     const description = document.getElementById("dealDescription").value.trim();
