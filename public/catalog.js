@@ -3,16 +3,18 @@
 // shape the rest of the site already expects, so app.js/deal.html/checkout.html
 // don't need to change how they read that data.
 //
-// Business rule: only the deal with featured_date = today ever carries a
-// discount (original_price). Everything else sells at its plain price.
+// Business rule: only the deal that's currently within its 24-hour "Deal of
+// the Day" window (tracked by featured_at) ever carries a discount. A
+// scheduled database job automatically reverts the price back to normal the
+// moment that window closes, even if nobody is on the site to see it happen.
 
 window.PRODUCTS = [];
-window.DAILY_DEALS = { today: null };
+window.DAILY_DEALS = { today: null, featuredAt: null };
 
 window.catalogReady = (async function loadCatalog() {
   const { data, error } = await sb
     .from("deals")
-    .select("id, seller_id, title, description, category, deal_type, price, original_price, image_url, image_urls, status, hot, in_stock, stock_count, highlights, featured_date, submitted_at")
+    .select("id, seller_id, title, description, category, deal_type, price, original_price, image_url, image_urls, status, hot, in_stock, stock_count, highlights, featured_at, submitted_at")
     .eq("status", "live")
     .order("submitted_at", { ascending: false });
 
@@ -30,11 +32,13 @@ window.catalogReady = (async function loadCatalog() {
     (sellers || []).forEach((s) => { sellerMap[s.id] = s.business_name; });
   }
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const nowMs = Date.now();
   let todayId = null;
+  let featuredAt = null;
 
   window.PRODUCTS = (data || []).map((d) => {
-    if (d.featured_date === todayStr) todayId = d.id;
+    const isCurrentlyFeatured = !!d.featured_at && (nowMs - new Date(d.featured_at).getTime()) < 24 * 60 * 60 * 1000;
+    if (isCurrentlyFeatured) { todayId = d.id; featuredAt = d.featured_at; }
     const gallery = Array.isArray(d.image_urls) && d.image_urls.length ? d.image_urls : (d.image_url ? [d.image_url] : []);
     return {
       id: d.id,
@@ -55,5 +59,5 @@ window.catalogReady = (async function loadCatalog() {
     };
   });
 
-  window.DAILY_DEALS = { today: todayId };
+  window.DAILY_DEALS = { today: todayId, featuredAt };
 })();

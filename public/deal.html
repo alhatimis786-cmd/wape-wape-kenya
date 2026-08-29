@@ -307,7 +307,7 @@ function renderDeal() {
         </div>` : ""}
       ${isToday ? `
         <div class="deal-card countdown-card">
-          <span class="cd-label">Hurry! Deal ends tonight</span>
+          <span class="cd-label">Hurry! Deal ends soon</span>
           <span class="cd-time" id="countdownTime">--:--:--</span>
         </div>` : ""}
       <div class="deal-card">
@@ -359,16 +359,17 @@ function renderDeal() {
     });
   });
 
-  if (isToday) {
+  if (isToday && window.DAILY_DEALS.featuredAt) {
+    const expiresAt = new Date(window.DAILY_DEALS.featuredAt).getTime() + 24 * 60 * 60 * 1000;
     const tick = () => {
-      const now = new Date();
-      const midnight = new Date(now); midnight.setHours(24, 0, 0, 0);
-      const diff = midnight - now;
+      const diff = expiresAt - Date.now();
+      const el = document.getElementById("countdownTime");
+      if (!el) return;
+      if (diff <= 0) { el.textContent = "00:00:00"; return; }
       const h = String(Math.floor(diff / 3600000)).padStart(2, "0");
       const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0");
       const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, "0");
-      const el = document.getElementById("countdownTime");
-      if (el) el.textContent = `${h}:${m}:${s}`;
+      el.textContent = `${h}:${m}:${s}`;
     };
     tick();
     setInterval(tick, 1000);

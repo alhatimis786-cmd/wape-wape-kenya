@@ -248,11 +248,11 @@ function renderDealOfDay() {
 
 function startDotdCountdown() {
   const el = document.getElementById("dotdCountdown");
-  if (!el) return;
+  if (!el || !window.DAILY_DEALS.featuredAt) return;
+  const expiresAt = new Date(window.DAILY_DEALS.featuredAt).getTime() + 24 * 60 * 60 * 1000;
   const tick = () => {
-    const now = new Date();
-    const midnight = new Date(now); midnight.setHours(24, 0, 0, 0);
-    const diff = midnight - now;
+    const diff = expiresAt - Date.now();
+    if (diff <= 0) { el.textContent = "00:00:00"; return; }
     const h = String(Math.floor(diff / 3600000)).padStart(2, "0");
     const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0");
     const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, "0");

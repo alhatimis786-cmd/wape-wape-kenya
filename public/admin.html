@@ -239,10 +239,10 @@ async function loadDeals() {
   if (error || !data || data.length === 0) { empty.style.display = "block"; return; }
   empty.style.display = "none";
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const nowMs = Date.now();
 
   body.innerHTML = data.map((d) => {
-    const isFeatured = d.featured_date === todayStr;
+    const isFeatured = !!d.featured_at && (nowMs - new Date(d.featured_at).getTime()) < 24 * 60 * 60 * 1000;
     return `
     <tr>
       <td><strong>${escapeHtml(d.title)}</strong><br><span style="color:var(--text-muted); font-size:0.8rem;">${escapeHtml((d.description || "").slice(0, 80))}</span></td>
@@ -325,10 +325,16 @@ async function loadDeals() {
       if (!marketPriceNum || marketPriceNum <= dealPriceNum) { alert("Market price must be a number greater than the deal price."); return; }
 
       btn.disabled = true;
-      // Only one deal can be "today's deal" — clear any other one first.
-      await sb.from("deals").update({ featured_date: null }).eq("featured_date", todayStr);
+      // Only one deal can be "today's deal" — properly revert any currently
+      // featured deal's price back to normal first, rather than just
+      // clearing its featured flag and leaving the discounted price stuck.
+      const stillFeatured = data.filter((d) => d.featured_at && (nowMs - new Date(d.featured_at).getTime()) < 24 * 60 * 60 * 1000);
+      for (const d of stillFeatured) {
+        await sb.rpc("admin_unfeature_deal", { target_deal_id: d.id });
+      }
       await sb.from("deals").update({
-        featured_date: todayStr,
+        featured_date: new Date().toISOString().slice(0, 10),
+        featured_at: new Date().toISOString(),
         price: dealPriceNum,
         original_price: marketPriceNum,
         status: "live"
@@ -340,7 +346,8 @@ async function loadDeals() {
   body.querySelectorAll("button[data-unfeature-id]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       btn.disabled = true;
-      await sb.from("deals").update({ featured_date: null, original_price: null }).eq("id", btn.dataset.unfeatureId);
+      const { error } = await sb.rpc("admin_unfeature_deal", { target_deal_id: btn.dataset.unfeatureId });
+      if (error) { alert("Couldn't remove feature: " + error.message); btn.disabled = false; return; }
       loadDeals();
     });
   });
