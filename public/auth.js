@@ -17,6 +17,14 @@ function escapeHtml(str) {
     .replace(/'/g, "&#39;");
 }
 
+// Formats a product/deal title so each word starts with a capital letter,
+// regardless of how the seller actually typed it (all lowercase, ALL CAPS,
+// etc.) — applied only for display, the original text stays as submitted.
+function titleCase(str) {
+  if (str === null || str === undefined) return "";
+  return String(str).replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+}
+
 async function wwkSignUp({ email, password, fullName, phone }) {
   return sb.auth.signUp({
     email,

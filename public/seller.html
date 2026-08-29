@@ -195,7 +195,7 @@ async function renderSellerPage() {
   grid.innerHTML = products.map((p) => {
     const outOfStock = p.inStock === false;
     const pct = (p.originalPrice && p.originalPrice > p.price) ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
-    const safeName = escapeHtml(p.name);
+    const safeName = escapeHtml(titleCase(p.name));
     return `
     <div class="card${outOfStock ? " out-of-stock" : ""}">
       <a href="/deal.html?id=${p.id}" class="card-img">

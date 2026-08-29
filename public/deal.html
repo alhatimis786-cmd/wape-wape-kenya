@@ -218,8 +218,8 @@ function renderDeal() {
     return;
   }
 
-  document.getElementById("pageTitle").textContent = product.name + " — Wape Wape Kenya";
-  document.getElementById("pageDesc").content = product.name + " — KES " + product.price.toLocaleString("en-KE") + " on Wape Wape Kenya.";
+  document.getElementById("pageTitle").textContent = titleCase(product.name) + " — Wape Wape Kenya";
+  document.getElementById("pageDesc").content = titleCase(product.name) + " — KES " + product.price.toLocaleString("en-KE") + " on Wape Wape Kenya.";
 
   const isToday = window.DAILY_DEALS && product.id === window.DAILY_DEALS.today;
   const pct = discountPct(product);
@@ -238,7 +238,7 @@ function renderDeal() {
         </button>
         <div class="deal-gallery-scroll" id="dealGalleryScroll">
           ${(product.images && product.images.length ? product.images : [null]).map((url) => `
-            <img src="${url ? url : imgSrc(product)}" alt="${escapeHtml(product.name)}" onerror="this.onerror=null;this.src='https://placehold.co/600x600/ECECF0/E0212B?text=${encodeURIComponent(product.name)}'">
+            <img src="${url ? url : imgSrc(product)}" alt="${escapeHtml(titleCase(product.name))}" onerror="this.onerror=null;this.src='https://placehold.co/600x600/ECECF0/E0212B?text=${encodeURIComponent(product.name)}'">
           `).join("")}
         </div>
         ${product.images && product.images.length > 1 ? `
@@ -249,7 +249,7 @@ function renderDeal() {
       <div class="deal-info">
         <span class="deal-category">${escapeHtml(product.category)}</span>
         ${product.sellerId && product.sellerName ? `<a href="/seller.html?id=${product.sellerId}" style="display:block; font-size:0.82rem; color:var(--accent); font-weight:600; margin-top:2px;">Sold by ${escapeHtml(product.sellerName)} &rsaquo;</a>` : ""}
-        <h1 class="deal-name">${escapeHtml(product.name)}</h1>
+        <h1 class="deal-name">${escapeHtml(titleCase(product.name))}</h1>
 
         <div class="deal-price-block">
           <div class="deal-price-labels">
@@ -348,7 +348,7 @@ function renderDeal() {
   document.getElementById("buyNowBtn").addEventListener("click", () => { addToCart(product.id); window.location.href = "/checkout.html"; });
 
   const shareUrl = window.location.href;
-  const shareText = `${product.name} — ${money(product.price)} on WapeWape Kenya`;
+  const shareText = `${titleCase(product.name)} — ${money(product.price)} on WapeWape Kenya`;
   document.getElementById("shareWhatsApp").href = `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`;
   document.getElementById("shareFacebook").href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
   document.getElementById("shareX").href = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
@@ -388,7 +388,7 @@ function renderRelated() {
   if (related.length === 0) return;
   document.getElementById("relatedSection").hidden = false;
   document.getElementById("relatedRow").innerHTML = related.map((p) => {
-    const safeName = escapeHtml(p.name);
+    const safeName = escapeHtml(titleCase(p.name));
     return `
     <a class="trending-card" href="/deal.html?id=${p.id}">
       <div class="t-img"><img src="${imgSrc(p)}" alt="${safeName}" onerror="this.onerror=null;this.src='https://placehold.co/400x400/ECECF0/E0212B?text=${encodeURIComponent(p.name)}'"></div>

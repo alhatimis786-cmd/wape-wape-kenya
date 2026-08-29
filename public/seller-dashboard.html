@@ -273,7 +273,7 @@ async function loadDeals() {
   empty.style.display = "none";
   body.innerHTML = data.map((d) => `
     <tr>
-      <td><strong>${escapeHtml(d.title)}</strong></td>
+      <td><strong>${escapeHtml(titleCase(d.title))}</strong></td>
       <td>${escapeHtml(d.category) || "—"}</td>
       <td>${d.deal_type && d.deal_type !== "regular" ? escapeHtml(dealTypeLabel(d.deal_type)) : "—"}</td>
       <td>${d.price > 0 ? money(d.price) : "—"} <span class="price-locked" title="Only WapeWape can change this once submitted">🔒</span></td>

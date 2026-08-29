@@ -123,7 +123,7 @@
     const itemsHtml = entries.map(([id, qty]) => {
       const p = window.PRODUCTS.find((p) => p.id === id);
       if (!p) return "";
-      const safeName = escapeHtml(p.name);
+      const safeName = escapeHtml(titleCase(p.name));
       return `
         <div class="co-item">
           <img src="${imgSrc(p)}" alt="${safeName}" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">

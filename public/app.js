@@ -38,7 +38,7 @@ const CHAT_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" s
 function cardActionsHTML(p) {
   const liked = isLiked(p.id);
   const outOfStock = p.inStock === false;
-  const safeName = escapeHtml(p.name);
+  const safeName = escapeHtml(titleCase(p.name));
   return `
     <div class="card-actions">
       <button class="icon-btn like-btn${liked ? " liked" : ""}" data-id="${p.id}" aria-label="Save ${safeName}" aria-pressed="${liked}">${HEART_ICON}</button>
@@ -162,7 +162,7 @@ function renderGrid() {
     noResults.hidden = true;
     grid.innerHTML = items.map((p) => {
       const outOfStock = p.inStock === false;
-      const safeName = escapeHtml(p.name);
+      const safeName = escapeHtml(titleCase(p.name));
       return `
       <div class="card${outOfStock ? " out-of-stock" : ""}">
         <a href="/deal.html?id=${p.id}" class="card-img">
@@ -204,7 +204,7 @@ function renderDealOfDay() {
       ${escapeHtml(h)}
     </li>`).join("");
 
-  const safeTodayName = escapeHtml(todayP.name);
+  const safeTodayName = escapeHtml(titleCase(todayP.name));
   row.innerHTML = `
     <article class="dotd-card dotd-featured">
       <a href="/deal.html?id=${todayP.id}" class="dotd-img">
@@ -272,7 +272,7 @@ function renderTrending() {
   }
   section.hidden = false;
   row.innerHTML = hot.map((p) => {
-    const safeName = escapeHtml(p.name);
+    const safeName = escapeHtml(titleCase(p.name));
     return `
     <a class="trending-card" href="#shop" data-id="${p.id}">
       <div class="t-img">
@@ -297,7 +297,7 @@ function renderCart() {
     el.innerHTML = entries.map(([id, qty]) => {
       const p = window.PRODUCTS.find((p) => p.id === id);
       if (!p) return "";
-      const safeName = escapeHtml(p.name);
+      const safeName = escapeHtml(titleCase(p.name));
       return `
         <div class="cart-item">
           <img src="${imgSrc(p)}" alt="${safeName}" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
