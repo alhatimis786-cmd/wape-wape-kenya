@@ -95,9 +95,13 @@
         </select>
         <span class="field-hint">If this fits one of WapeWape's special deal categories, pick it here — WapeWape reviews and confirms it before it goes live.</span>
       </label>
-      <label>Price (KES) — your best deal
+      <label>WapeWape Price (KES) — your best deal
         <input type="number" id="dealPrice" min="1" required>
         <span class="field-hint">Once submitted, only WapeWape can change this price — see note below.</span>
+      </label>
+      <label>Retail Price (KES) — what it normally sells for
+        <input type="number" id="dealRetailPrice" min="1">
+        <span class="field-hint">Helps WapeWape review your deal — this isn't shown to customers directly.</span>
       </label>
       <label>Description
         <textarea id="dealDescription" placeholder="What is it, what's included, anything customers should know"></textarea>
@@ -118,7 +122,7 @@
   <div class="sd-section">
     <h2>Your Products</h2>
     <table class="sd-table">
-      <thead><tr><th>Product</th><th>Category</th><th>Deal Type</th><th>Price</th><th>Status</th></tr></thead>
+      <thead><tr><th>Product</th><th>Category</th><th>Deal Type</th><th>WapeWape Price</th><th>Retail Price</th><th>Status</th></tr></thead>
       <tbody id="dealsBody"></tbody>
     </table>
     <div class="sd-empty" id="dealsEmpty" style="display:none;">You haven't submitted any products yet.</div>
@@ -231,6 +235,8 @@ async function initDashboard() {
     const category = categorySelect === "Other" && customCategory ? customCategory : categorySelect;
     const dealType = document.getElementById("dealType").value;
     const price = Number(document.getElementById("dealPrice").value);
+    const retailPriceInput = document.getElementById("dealRetailPrice").value;
+    const retailPrice = retailPriceInput ? Number(retailPriceInput) : null;
     const description = document.getElementById("dealDescription").value.trim();
     const imageFiles = Array.from(document.getElementById("dealImage").files).slice(0, 5);
 
@@ -260,6 +266,7 @@ async function initDashboard() {
       category,
       deal_type: dealType,
       price,
+      seller_retail_price: retailPrice,
       description,
       image_url: uploadedUrls[0] || null,
       image_urls: uploadedUrls,
@@ -283,7 +290,7 @@ async function initDashboard() {
 }
 
 async function loadDeals() {
-  const { data, error } = await sb.from("deals").select("id, title, category, deal_type, price, original_price, image_url, status, hot, in_stock, stock_count, highlights, submitted_at").eq("seller_id", sellerRow.id).order("submitted_at", { ascending: false });
+  const { data, error } = await sb.from("deals").select("id, title, category, deal_type, price, seller_retail_price, original_price, image_url, status, hot, in_stock, stock_count, highlights, submitted_at").eq("seller_id", sellerRow.id).order("submitted_at", { ascending: false });
   const body = document.getElementById("dealsBody");
   const empty = document.getElementById("dealsEmpty");
   if (error || !data || data.length === 0) { empty.style.display = "block"; body.innerHTML = ""; return; }
@@ -294,6 +301,7 @@ async function loadDeals() {
       <td>${escapeHtml(d.category) || "—"}</td>
       <td>${d.deal_type && d.deal_type !== "regular" ? escapeHtml(dealTypeLabel(d.deal_type)) : "—"}</td>
       <td>${d.price > 0 ? money(d.price) : "—"} <span class="price-locked" title="Only WapeWape can change this once submitted">🔒</span></td>
+      <td>${d.seller_retail_price ? money(d.seller_retail_price) : "—"}</td>
       <td>${statusPill(d.status)}</td>
     </tr>`).join("");
 }

@@ -96,7 +96,7 @@
 
   <div class="admin-panel" id="panel-deals">
     <table class="admin-table">
-      <thead><tr><th>Deal</th><th>Seller</th><th>Category</th><th>Deal Type</th><th>Price</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>Deal</th><th>Seller</th><th>Category</th><th>Deal Type</th><th>WapeWape Price</th><th>Retail Price</th><th>Status</th><th></th></tr></thead>
       <tbody id="dealsBody"></tbody>
     </table>
     <div class="admin-empty" id="dealsEmpty" style="display:none;">No deals submitted yet.</div>
@@ -254,6 +254,7 @@ async function loadDeals() {
         </select>
       </td>
       <td>${d.price > 0 ? money(d.price) : "—"}${d.original_price ? `<br><span style="color:var(--text-muted); font-size:0.78rem; text-decoration:line-through;">${money(d.original_price)}</span>` : ""}</td>
+      <td>${d.seller_retail_price ? money(d.seller_retail_price) : "—"}</td>
       <td>${statusPill(d.status)}${isFeatured ? `<br><span class="status-pill status-live" style="margin-top:4px;">★ Today's Deal</span>` : ""}</td>
       <td>
         <div class="row-actions">
@@ -263,7 +264,7 @@ async function loadDeals() {
           ` : ""}
           <button class="row-btn edit" data-edit-price-id="${d.id}" data-current-price="${d.price}">Edit Price</button>
           ${d.status === "live" && !isFeatured ? `
-            <button class="row-btn feature" data-feature-id="${d.id}" data-current-price="${d.price}">Make Deal of the Day</button>
+            <button class="row-btn feature" data-feature-id="${d.id}" data-current-price="${d.price}" data-retail-price="${d.seller_retail_price || ""}">Make Deal of the Day</button>
           ` : ""}
           ${isFeatured ? `
             <button class="row-btn reject" data-unfeature-id="${d.id}">Remove Feature</button>
@@ -313,13 +314,18 @@ async function loadDeals() {
     btn.addEventListener("click", async () => {
       const dealId = btn.dataset.featureId;
       const current = Number(btn.dataset.currentPrice) || 0;
+      const retailSuggestion = Number(btn.dataset.retailPrice) || 0;
 
       const dealPrice = prompt("What should the deal price be (KES) — what customers pay today?", current > 0 ? current : "");
       if (dealPrice === null) return;
       const dealPriceNum = Number(dealPrice);
       if (!dealPriceNum || dealPriceNum <= 0) { alert("Enter a valid deal price greater than 0."); return; }
 
-      const marketPrice = prompt("What's the verified market price (KES) — this becomes the crossed-out \"was\" price? Must be higher than the deal price.");
+      const marketPrice = prompt(
+        "What's the verified market price (KES) — this becomes the crossed-out \"was\" price? Must be higher than the deal price." +
+        (retailSuggestion ? `\n\n(Pre-filled with the seller's own submitted retail price — still worth a quick check before confirming.)` : ""),
+        retailSuggestion > dealPriceNum ? retailSuggestion : ""
+      );
       if (marketPrice === null) return;
       const marketPriceNum = Number(marketPrice);
       if (!marketPriceNum || marketPriceNum <= dealPriceNum) { alert("Market price must be a number greater than the deal price."); return; }
