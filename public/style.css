@@ -18,6 +18,23 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+
+/* Removes the default blue/gray flash mobile browsers show when tapping a
+   link or button, replacing it with a subtle, branded press effect instead. */
+html, body, button, a, input, select, textarea, .card, .cart-fab {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+button, .btn, .add-btn, .icon-btn, .cart-fab, .row-btn, .kra-toggle-btn, .nav-cat-link, .tab, .card, .dotd-card {
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+button:active, .btn:active, .add-btn:active, .icon-btn:active, .cart-fab:active,
+.row-btn:active, .kra-toggle-btn:active, .nav-cat-link:active, .tab:active,
+.card:active, .dotd-card:active, a:active {
+  transform: scale(0.96);
+  opacity: 0.85;
+}
 body {
   margin: 0;
   background: var(--bg);
