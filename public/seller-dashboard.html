@@ -85,7 +85,7 @@
       </label>
       <label>Deal type
         <select id="dealType">
-          <option value="regular">Regular listing</option>
+          <option value="deal_of_day">Deal of the Day</option>
           <option value="deal_of_week">Deal of the Week</option>
           <option value="deal_of_month">Deal of the Month</option>
           <option value="flash_deal">Flash Deal</option>
@@ -135,7 +135,7 @@
 const money = (n) => "KES " + Number(n || 0).toLocaleString("en-KE");
 const statusPill = (s) => `<span class="status-pill status-${s}">${s}</span>`;
 const DEAL_TYPE_LABELS = {
-  regular: "Regular listing", deal_of_week: "Deal of the Week", deal_of_month: "Deal of the Month",
+  regular: "Regular listing", deal_of_day: "Deal of the Day", deal_of_week: "Deal of the Week", deal_of_month: "Deal of the Month",
   flash_deal: "Flash Deal", crazy_deal: "Deal Breaker", clearance_sale: "Clearance Sale", bulk_deal: "Bulk Deal"
 };
 const dealTypeLabel = (t) => DEAL_TYPE_LABELS[t] || "Regular listing";
