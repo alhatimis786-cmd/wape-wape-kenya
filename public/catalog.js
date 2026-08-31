@@ -3,13 +3,14 @@
 // shape the rest of the site already expects, so app.js/deal.html/checkout.html
 // don't need to change how they read that data.
 //
-// Business rule: only the deal that's currently within its 24-hour "Deal of
-// the Day" window (tracked by featured_at) ever carries a discount. A
-// scheduled database job automatically reverts the price back to normal the
-// moment that window closes, even if nobody is on the site to see it happen.
+// Business rule: a deal only carries a discount while it's inside its own
+// 24-hour "Deal of the Day" window (tracked per-deal by featured_at) — but
+// multiple deals can be featured at the same time. A scheduled database job
+// automatically reverts each one's price back to normal the moment its own
+// window closes, even if nobody is on the site to see it happen.
 
 window.PRODUCTS = [];
-window.DAILY_DEALS = { today: null, featuredAt: null };
+window.DAILY_DEALS = { todayIds: [] };
 
 window.catalogReady = (async function loadCatalog() {
   const { data, error } = await sb
@@ -33,12 +34,11 @@ window.catalogReady = (async function loadCatalog() {
   }
 
   const nowMs = Date.now();
-  let todayId = null;
-  let featuredAt = null;
+  const todayIds = [];
 
   window.PRODUCTS = (data || []).map((d) => {
     const isCurrentlyFeatured = !!d.featured_at && (nowMs - new Date(d.featured_at).getTime()) < 24 * 60 * 60 * 1000;
-    if (isCurrentlyFeatured) { todayId = d.id; featuredAt = d.featured_at; }
+    if (isCurrentlyFeatured) todayIds.push(d.id);
     const gallery = Array.isArray(d.image_urls) && d.image_urls.length ? d.image_urls : (d.image_url ? [d.image_url] : []);
     return {
       id: d.id,
@@ -54,10 +54,11 @@ window.catalogReady = (async function loadCatalog() {
       image: d.image_url,
       images: gallery,
       dealType: d.deal_type || "regular",
+      featuredAt: isCurrentlyFeatured ? d.featured_at : null,
       sellerId: d.seller_id,
       sellerName: sellerMap[d.seller_id] || null
     };
   });
 
-  window.DAILY_DEALS = { today: todayId, featuredAt };
+  window.DAILY_DEALS = { todayIds };
 })();

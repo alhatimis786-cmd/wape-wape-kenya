@@ -150,7 +150,7 @@ function renderGrid() {
 
   const DEAL_TYPE_NAMES = {
     deal_of_week: "Deal of the Week", deal_of_month: "Deal of the Month", flash_deal: "Flash Deals",
-    crazy_deal: "Crazy Deals", clearance_sale: "Clearance Sale", bulk_deal: "Bulk Deals"
+    crazy_deal: "Deal Breakers", clearance_sale: "Clearance Sale", bulk_deal: "Bulk Deals"
   };
   const dealTypeLabel = state.dealType ? DEAL_TYPE_NAMES[state.dealType] : "";
   resultCount.textContent = `${items.length} deal${items.length === 1 ? "" : "s"}${dealTypeLabel ? " — " + dealTypeLabel : ""}${state.category !== "All" ? " in " + state.category : ""}${state.search ? ` matching "${state.search}"` : ""}`;
@@ -190,66 +190,79 @@ function renderGrid() {
 }
 
 function renderDealOfDay() {
-  const deals = window.DAILY_DEALS;
   const row = document.getElementById("dotdRow");
-  if (!row || !deals || !deals.today) return;
+  const section = document.getElementById("dealOfDay");
+  if (!row || !section) return;
 
-  const todayP = window.PRODUCTS.find((p) => p.id === deals.today);
-  if (!todayP) return;
+  const featured = window.PRODUCTS.filter((p) => p.featuredAt);
+  if (featured.length === 0) {
+    section.style.display = "none";
+    return;
+  }
+  section.style.display = "";
 
-  const pct = discountPct(todayP);
-  const highlightsHtml = (todayP.highlights || []).slice(0, 4).map((h) => `
-    <li>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-      ${escapeHtml(h)}
-    </li>`).join("");
+  row.innerHTML = featured.map((p) => {
+    const pct = discountPct(p);
+    const highlightsHtml = (p.highlights || []).slice(0, 4).map((h) => `
+      <li>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+        ${escapeHtml(h)}
+      </li>`).join("");
+    const safeName = escapeHtml(titleCase(p.name));
 
-  const safeTodayName = escapeHtml(titleCase(todayP.name));
-  row.innerHTML = `
+    return `
     <article class="dotd-card dotd-featured">
-      <a href="/deal.html?id=${todayP.id}" class="dotd-img">
+      <a href="/deal.html?id=${p.id}" class="dotd-img">
         <span class="dotd-tag">Today Only</span>
-        <img src="${imgSrc(todayP)}" alt="${safeTodayName}" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(todayP)}'">
+        <img src="${imgSrc(p)}" alt="${safeName}" loading="lazy" onerror="this.onerror=null;this.src='${placeholderFor(p)}'">
         <span class="dotd-verified-tag">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
           WapeWape Verified
         </span>
       </a>
       <div class="dotd-body">
-        <span class="card-cat">${escapeHtml(todayP.category)}</span>
-        <a href="/deal.html?id=${todayP.id}" class="dotd-name">${safeTodayName}</a>
+        <span class="card-cat">${escapeHtml(p.category)}</span>
+        <a href="/deal.html?id=${p.id}" class="dotd-name">${safeName}</a>
         ${highlightsHtml ? `<ul class="dotd-highlights">${highlightsHtml}</ul>` : ""}
         <div class="dotd-featured-actions">
-          <a href="/deal.html?id=${todayP.id}" class="btn btn-primary">View Deal</a>
-          <button class="btn btn-ghost" id="dotdAddToCart">Add to Cart</button>
+          <a href="/deal.html?id=${p.id}" class="btn btn-primary">View Deal</a>
+          <button class="btn btn-ghost" data-dotd-add="${p.id}">Add to Cart</button>
         </div>
       </div>
       <div class="dotd-pricing">
-        ${todayP.originalPrice ? `
+        ${p.originalPrice ? `
         <div>
           <span class="dotd-price-label">Typical Market Price</span>
-          <span class="dotd-market-price">${money(todayP.originalPrice)}</span>
+          <span class="dotd-market-price">${money(p.originalPrice)}</span>
         </div>` : ""}
         <div>
           <span class="dotd-price-label">WapeWape Price</span>
-          <span class="dotd-deal-price">${money(todayP.price)}</span>
+          <span class="dotd-deal-price">${money(p.price)}</span>
         </div>
-        ${pct > 0 ? `<span class="dotd-savings">You Save ${money(todayP.originalPrice - todayP.price)} (${pct}%)</span>` : ""}
+        ${pct > 0 ? `<span class="dotd-savings">You Save ${money(p.originalPrice - p.price)} (${pct}%)</span>` : ""}
+        <div class="dotd-card-countdown">
+          <span class="dotd-card-countdown-label">Ends in</span>
+          <span class="dotd-card-countdown-time" data-dotd-timer="${p.id}">--:--:--</span>
+        </div>
         <div class="dotd-verify-note">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           Price verified against current market pricing.
         </div>
       </div>
     </article>`;
+  }).join("");
 
-  document.getElementById("dotdAddToCart").addEventListener("click", () => addToCart(todayP.id));
-  startDotdCountdown();
+  row.querySelectorAll("button[data-dotd-add]").forEach((btn) => {
+    btn.addEventListener("click", () => addToCart(btn.dataset.dotdAdd));
+  });
+
+  featured.forEach((p) => startDotdCardCountdown(p.id, p.featuredAt));
 }
 
-function startDotdCountdown() {
-  const el = document.getElementById("dotdCountdown");
-  if (!el || !window.DAILY_DEALS.featuredAt) return;
-  const expiresAt = new Date(window.DAILY_DEALS.featuredAt).getTime() + 24 * 60 * 60 * 1000;
+function startDotdCardCountdown(productId, featuredAt) {
+  const el = document.querySelector(`[data-dotd-timer="${productId}"]`);
+  if (!el || !featuredAt) return;
+  const expiresAt = new Date(featuredAt).getTime() + 24 * 60 * 60 * 1000;
   const tick = () => {
     const diff = expiresAt - Date.now();
     if (diff <= 0) { el.textContent = "00:00:00"; return; }

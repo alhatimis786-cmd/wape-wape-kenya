@@ -136,7 +136,7 @@ const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-KE", { day: "numer
 const statusPill = (s) => `<span class="status-pill status-${s}">${s.replace(/_/g, " ")}</span>`;
 const DEAL_TYPE_OPTIONS = [
   ["regular", "Regular listing"], ["deal_of_week", "Deal of the Week"], ["deal_of_month", "Deal of the Month"],
-  ["flash_deal", "Flash Deal"], ["crazy_deal", "Crazy Deal"], ["clearance_sale", "Clearance Sale"], ["bulk_deal", "Bulk Deal"]
+  ["flash_deal", "Flash Deal"], ["crazy_deal", "Deal Breaker"], ["clearance_sale", "Clearance Sale"], ["bulk_deal", "Bulk Deal"]
 ];
 
 async function initAdmin() {
@@ -331,13 +331,8 @@ async function loadDeals() {
       if (!marketPriceNum || marketPriceNum <= dealPriceNum) { alert("Market price must be a number greater than the deal price."); return; }
 
       btn.disabled = true;
-      // Only one deal can be "today's deal" — properly revert any currently
-      // featured deal's price back to normal first, rather than just
-      // clearing its featured flag and leaving the discounted price stuck.
-      const stillFeatured = data.filter((d) => d.featured_at && (nowMs - new Date(d.featured_at).getTime()) < 24 * 60 * 60 * 1000);
-      for (const d of stillFeatured) {
-        await sb.rpc("admin_unfeature_deal", { target_deal_id: d.id });
-      }
+      // Multiple deals can be featured simultaneously now — this just adds
+      // this one to the mix without touching whatever else is already live.
       await sb.from("deals").update({
         featured_date: new Date().toISOString().slice(0, 10),
         featured_at: new Date().toISOString(),
