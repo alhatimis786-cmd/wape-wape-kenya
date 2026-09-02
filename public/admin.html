@@ -217,7 +217,7 @@ document.addEventListener("keydown", (e) => {
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : "—";
 const statusPill = (s) => `<span class="status-pill status-${s}">${s.replace(/_/g, " ")}</span>`;
 const DEAL_TYPE_OPTIONS = [
-  ["regular", "Regular listing"], ["deal_of_day", "Deal of the Day"], ["deal_of_week", "Deal of the Week"], ["deal_of_month", "Deal of the Month"],
+  ["deal_of_day", "Deal of the Day"], ["deal_of_week", "Deal of the Week"], ["deal_of_month", "Deal of the Month"],
   ["flash_deal", "Flash Deal"], ["crazy_deal", "Deal Breaker"], ["clearance_sale", "Clearance Sale"], ["bulk_deal", "Bulk Deal"]
 ];
 
@@ -339,6 +339,7 @@ async function loadDeals() {
       <td>${escapeHtml(d.category) || "—"}</td>
       <td>
         <select class="deal-type-select" data-deal-type-id="${d.id}">
+          ${!DEAL_TYPE_OPTIONS.some(([val]) => val === d.deal_type) ? `<option value="${d.deal_type}" selected disabled>Regular listing (legacy)</option>` : ""}
           ${DEAL_TYPE_OPTIONS.map(([val, label]) => `<option value="${val}"${d.deal_type === val ? " selected" : ""}>${label}</option>`).join("")}
         </select>
       </td>
