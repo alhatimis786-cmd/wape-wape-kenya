@@ -28,8 +28,7 @@ function toggleLike(id, btn) {
 function askAboutProduct(id) {
   const p = window.PRODUCTS.find((p) => p.id === id);
   if (!p) return;
-  const msg = encodeURIComponent(`Hi, I have a question about ${p.name} (${money(p.price)}).`);
-  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, "_blank");
+  wwkChatOpen(`Hi, I have a question about ${p.name} (${money(p.price)}).`);
 }
 
 const HEART_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-6.7-4.35-9.33-8.2C1.02 10.28 1.6 6.9 4.36 5.3c2.3-1.33 5.02-.62 6.64 1.44C12.62 4.68 15.34 3.97 17.64 5.3c2.76 1.6 3.34 4.98 1.69 7.5C18.7 16.65 12 21 12 21z"/></svg>`;
@@ -411,9 +410,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderGrid();
   });
 
-  const waLink = `https://wa.me/${WHATSAPP_NUMBER}`;
-  document.getElementById("footerWhatsApp").href = waLink;
-  document.getElementById("navWhatsApp").href = waLink;
+  document.getElementById("footerChatBtn").addEventListener("click", () => wwkChatOpen());
+  document.getElementById("navChatBtn").addEventListener("click", () => wwkChatOpen());
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});

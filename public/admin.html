@@ -87,6 +87,20 @@
   }
   .admin-gate { max-width: 480px; margin: 80px auto; text-align: center; padding: 0 24px; }
   .admin-gate p { color: var(--text-muted); margin: 12px 0 20px; }
+
+  .chat-unread-dot { display: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-left: 4px; }
+  .chat-unread-dot.show { display: inline-block; }
+  .chat-admin-layout { display: flex; gap: 16px; height: 560px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .chat-conv-list { width: 260px; flex-shrink: 0; overflow-y: auto; border-right: 1px solid var(--border); background: var(--bg-elevated); }
+  .chat-conv-item { padding: 12px 14px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .chat-conv-item:hover { background: var(--bg); }
+  .chat-conv-item.active { background: #fff; border-left: 3px solid var(--accent); }
+  .chat-conv-item .name { font-weight: 600; font-size: 0.88rem; }
+  .chat-conv-item .preview { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .chat-conv-item .conv-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 5px; }
+  .chat-admin-thread { flex: 1; display: flex; flex-direction: column; }
+  .chat-admin-thread .chat-messages { flex: 1; }
+  .chat-admin-thread-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.9rem; }
 </style>
 </head>
 <body>
@@ -125,6 +139,7 @@
     <button class="admin-tab" data-tab="orders">Orders</button>
     <button class="admin-tab" data-tab="ffm">Find It For Me</button>
     <button class="admin-tab" data-tab="pending-signups">Pending Signups</button>
+    <button class="admin-tab" data-tab="live-chat">Live Chat <span id="chatUnreadDot" class="chat-unread-dot"></span></button>
   </div>
 
   <div class="admin-panel active" id="panel-sellers">
@@ -167,7 +182,27 @@
     </table>
     <div class="admin-empty" id="pendingSignupsEmpty" style="display:none;">No pending signups — everyone's confirmed.</div>
   </div>
+
+  <div class="admin-panel" id="panel-live-chat">
+    <div class="chat-admin-layout">
+      <div class="chat-conv-list" id="chatConvList"></div>
+      <div class="chat-admin-thread" id="chatAdminThread">
+        <p class="chat-msg-empty" style="margin:auto;">Select a conversation to view messages.</p>
+      </div>
+    </div>
+  </div>
 </div>
+
+<template id="chatThreadTemplate">
+  <div class="chat-admin-thread-header" id="chatThreadHeader"></div>
+  <div class="chat-messages" id="chatAdminMessages"></div>
+  <div class="chat-input-row">
+    <input type="text" id="chatAdminInput" placeholder="Type a reply…" maxlength="500">
+    <button class="chat-send-btn" id="chatAdminSendBtn" aria-label="Send reply">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</template>
 
 <script src="/vendor/supabase.js"></script>
 <script src="/auth.js"></script>
@@ -252,6 +287,7 @@ async function initAdmin() {
   loadOrders();
   loadFfm();
   loadPendingSignups();
+  loadChatConversations();
 
   document.querySelectorAll(".admin-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -528,6 +564,132 @@ async function loadPendingSignups() {
       btn.textContent = error ? "Failed — try again" : "✓ Sent";
     });
   });
+}
+
+// ---------- Live Chat ----------
+let chatActiveConvId = null;
+let chatConversationsCache = [];
+let chatMessageChannel = null;
+let chatListChannel = null;
+let chatRenderedMessageIds = new Set();
+
+async function loadChatConversations() {
+  const { data } = await sb
+    .from("chat_conversations")
+    .select("id, customer_name, status, last_message_at, unread_by_admin")
+    .order("last_message_at", { ascending: false });
+
+  chatConversationsCache = data || [];
+  renderChatConvList();
+
+  const anyUnread = chatConversationsCache.some((c) => c.unread_by_admin);
+  document.getElementById("chatUnreadDot").classList.toggle("show", anyUnread);
+
+  if (!chatListChannel) {
+    chatListChannel = sb
+      .channel("admin-chat-list")
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_conversations" }, loadChatConversations)
+      .subscribe();
+  }
+}
+
+function renderChatConvList() {
+  const list = document.getElementById("chatConvList");
+  if (chatConversationsCache.length === 0) {
+    list.innerHTML = `<p class="chat-msg-empty" style="padding:20px;">No conversations yet.</p>`;
+    return;
+  }
+  list.innerHTML = chatConversationsCache.map((c) => `
+    <div class="chat-conv-item${c.id === chatActiveConvId ? " active" : ""}" data-conv-id="${c.id}">
+      <div class="name">${c.unread_by_admin ? `<span class="conv-dot"></span>` : ""}${escapeHtml(c.customer_name) || "Guest visitor"}</div>
+      <div class="preview">${fmtDate(c.last_message_at)}</div>
+    </div>
+  `).join("");
+
+  list.querySelectorAll(".chat-conv-item").forEach((el) => {
+    el.addEventListener("click", () => openChatThread(el.dataset.convId));
+  });
+}
+
+async function openChatThread(convId) {
+  chatActiveConvId = convId;
+  renderChatConvList();
+
+  const conv = chatConversationsCache.find((c) => c.id === convId);
+  const thread = document.getElementById("chatAdminThread");
+  const tpl = document.getElementById("chatThreadTemplate");
+  thread.innerHTML = "";
+  thread.appendChild(tpl.content.cloneNode(true));
+  document.getElementById("chatThreadHeader").textContent = conv ? (conv.customer_name || "Guest visitor") : "Conversation";
+
+  await sb.from("chat_conversations").update({ unread_by_admin: false }).eq("id", convId);
+  loadChatConversations();
+
+  chatRenderedMessageIds = new Set();
+  const { data } = await sb
+    .from("chat_messages")
+    .select("id, sender_type, message, created_at")
+    .eq("conversation_id", convId)
+    .order("created_at", { ascending: true });
+
+  const container = document.getElementById("chatAdminMessages");
+  if (!data || data.length === 0) {
+    container.innerHTML = `<p class="chat-msg-empty">No messages yet.</p>`;
+  } else {
+    data.forEach((m) => {
+      chatRenderedMessageIds.add(m.id);
+      appendChatAdminMessage(m.sender_type, m.message);
+    });
+  }
+
+  document.getElementById("chatAdminSendBtn").addEventListener("click", sendChatAdminReply);
+  document.getElementById("chatAdminInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendChatAdminReply();
+  });
+
+  if (chatMessageChannel) sb.removeChannel(chatMessageChannel);
+  chatMessageChannel = sb
+    .channel(`admin-chat-${convId}`)
+    .on("postgres_changes", {
+      event: "INSERT", schema: "public", table: "chat_messages", filter: `conversation_id=eq.${convId}`
+    }, (payload) => {
+      const m = payload.new;
+      if (chatRenderedMessageIds.has(m.id)) return;
+      chatRenderedMessageIds.add(m.id);
+      appendChatAdminMessage(m.sender_type, m.message);
+      if (m.sender_type === "customer") {
+        sb.from("chat_conversations").update({ unread_by_admin: false }).eq("id", convId);
+      }
+    })
+    .subscribe();
+}
+
+function appendChatAdminMessage(senderType, message) {
+  const container = document.getElementById("chatAdminMessages");
+  if (!container) return;
+  const empty = container.querySelector(".chat-msg-empty");
+  if (empty) empty.remove();
+  const div = document.createElement("div");
+  div.className = `chat-msg from-${senderType}`;
+  div.textContent = message;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendChatAdminReply() {
+  const input = document.getElementById("chatAdminInput");
+  const text = input.value.trim();
+  if (!text || !chatActiveConvId) return;
+  input.value = "";
+
+  const { error } = await sb.from("chat_messages").insert({
+    conversation_id: chatActiveConvId,
+    sender_type: "admin",
+    message: text
+  });
+  if (!error) {
+    await sb.from("chat_conversations").update({ last_message_at: new Date().toISOString(), unread_by_customer: true }).eq("id", chatActiveConvId);
+  }
 }
 
 initAdmin();

@@ -18,6 +18,9 @@ function buildMessage(table, record) {
   if (table === "find_it_for_me_requests") {
     return `WapeWape: New Find It For Me request — "${(record.item_description || "").slice(0, 60)}". Check your admin dashboard.`;
   }
+  if (table === "chat_messages") {
+    return `WapeWape: New live chat message — "${(record.message || "").slice(0, 60)}". Reply in your admin dashboard.`;
+  }
   return null;
 }
 
