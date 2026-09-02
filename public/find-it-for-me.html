@@ -96,12 +96,17 @@
 </div>
 
 <form class="site-form green" id="findForm">
+  <label>Your name
+    <input type="text" id="findName" placeholder="e.g. Jane Wanjiru" required>
+  </label>
+  <label>Phone number
+    <input type="tel" id="findPhone" placeholder="e.g. 0712345678" required>
+  </label>
   <label>What are you looking for?
     <textarea id="findItem" placeholder="e.g. A 55-inch smart TV, similar to the Samsung ones" required></textarea>
   </label>
   <label>Photo or link (optional)
-    <input type="text" id="findPhotoLink" placeholder="Paste a link, or mention you'll send a photo on WhatsApp">
-    <span class="field-hint">WhatsApp requests can carry photos directly — this box is just for links.</span>
+    <input type="text" id="findPhotoLink" placeholder="Paste a link to a photo or similar product">
   </label>
   <label>Budget (optional)
     <input type="number" id="findBudget" placeholder="e.g. 30000" min="0">
@@ -115,13 +120,14 @@
   <label>Additional notes (optional)
     <textarea id="findNotes" placeholder="Color, brand preference, timeline — anything that helps us search"></textarea>
   </label>
-  <button type="submit" class="btn btn-primary">Submit Request on WhatsApp</button>
+  <button type="submit" class="btn btn-primary" id="findSubmitBtn">Submit Request</button>
+  <p id="findMsg" class="field-hint" style="text-align:center;"></p>
 </form>
 
 <div class="form-success" id="findSuccess">
   <div class="check">✅</div>
   <h3>Request sent</h3>
-  <p>We've opened WhatsApp with your request filled in — just hit send. We'll start searching our seller network right away.</p>
+  <p>We've got your request and we'll start searching our seller network right away. We'll reach out on the number you gave us once we find something.</p>
 </div>
 <footer class="footer">
   <a href="/" class="brand-block">
@@ -159,8 +165,16 @@
   if (footChatBtn) footChatBtn.addEventListener("click", () => wwkChatOpen());
 </script>
 <script>
-document.getElementById("findForm").addEventListener("submit", function (e) {
+document.getElementById("findForm").addEventListener("submit", async function (e) {
   e.preventDefault();
+  const msg = document.getElementById("findMsg");
+  const btn = document.getElementById("findSubmitBtn");
+  btn.disabled = true;
+  msg.textContent = "Submitting…";
+  msg.style.color = "var(--text-muted)";
+
+  const name = document.getElementById("findName").value.trim();
+  const phone = document.getElementById("findPhone").value.trim();
   const item = document.getElementById("findItem").value.trim();
   const link = document.getElementById("findPhotoLink").value.trim();
   const budget = document.getElementById("findBudget").value.trim();
@@ -168,16 +182,29 @@ document.getElementById("findForm").addEventListener("submit", function (e) {
   const location = document.getElementById("findLocation").value.trim();
   const notes = document.getElementById("findNotes").value.trim();
 
-  const lines = ["Hi WapeWape, I'd like help finding something:", ""];
-  lines.push("Item: " + item);
-  if (link) lines.push("Reference link: " + link);
-  if (budget) lines.push("Budget: KES " + budget);
-  lines.push("Quantity: " + qty);
-  lines.push("Location: " + location);
-  if (notes) lines.push("Notes: " + notes);
+  const session = await wwkGetSession();
 
-  const msg = encodeURIComponent(lines.join("\n"));
-  window.open("https://wa.me/254181171147?text=" + msg, "_blank");
+  const { error } = await sb.from("find_it_for_me_requests").insert({
+    customer_id: session ? session.user.id : null,
+    customer_name: name,
+    customer_phone: phone,
+    item_description: item,
+    photo_link: link || null,
+    budget: budget ? Number(budget) : null,
+    quantity: Number(qty),
+    location: location,
+    notes: notes || null,
+    status: "pending"
+  });
+
+  btn.disabled = false;
+
+  if (error) {
+    msg.textContent = "Something went wrong — please try again: " + error.message;
+    msg.style.color = "var(--accent)";
+    return;
+  }
+
   document.getElementById("findForm").style.display = "none";
   document.getElementById("findSuccess").classList.add("visible");
 });
